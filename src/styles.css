@@ -1,0 +1,11 @@
+@import "tailwindcss";
+
+body {
+  font-family: Arial, sans-serif;    
+}
+
+.common-style-block {
+  height: 50%;
+}
+  
+  
