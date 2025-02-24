@@ -1,7 +1,7 @@
 import React from "react";
 import Sidebar from "./sidebar"
-import RequestPanel from "./ResponsePanel";
-import ResponsePanel from "./RequestPanel";
+import RequestPanel from "./RequestPanel";
+import ResponsePanel from "./ResponsePanel";
 
 const BodyContainer = () => {
   
