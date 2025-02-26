@@ -1,11 +1,10 @@
 @import "tailwindcss";
 
 body {
-  font-family: Arial, sans-serif;    
+  font-family: Arial, sans-serif; 
+  background-color: white;   
 }
 
 .common-style-block {
   height: 50%;
 }
-  
-  
