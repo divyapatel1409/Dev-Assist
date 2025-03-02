@@ -1,30 +1,47 @@
 import React, { useState, useEffect, useRef } from "react";
 
-const ResponsePanel = () => {
+const ResponsePanel = ({response}) => {
   const [activeTab, setActiveTab] = useState("headers");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef(null); // Ref for the dropdown menu
 
   // Mock response data
-  const response = {
-    status: "200 OK",
-    time: "320 ms",
-    size: "1.2 KB",
-    headers: [
-      { key: "Content-Type", value: "application/json" },
-      { key: "Cache-Control", value: "no-cache" },
-      { key: "Connection", value: "keep-alive" },
-    ],
-    cookies: [
-      { name: "sessionId", value: "abc123", domain: "example.com", path: "/", expires: "2023-12-31" },
-      { name: "theme", value: "dark", domain: "example.com", path: "/", expires: "2023-12-31" },
-    ],
-    testResults: [
-      { name: "Status Code Test", status: "Pass", message: "Expected 200, got 200" },
-      { name: "Response Time Test", status: "Fail", message: "Expected < 200ms, got 320ms" },
-    ],
-    notes: "This is a sample note about the response.",
-  };
+  // const response = {
+  //   status: "200 OK",
+  //   time: "320 ms",
+  //   size: "1.2 KB",
+  //   headers: [
+  //     { key: "Content-Type", value: "application/json" },
+  //     { key: "Cache-Control", value: "no-cache" },
+  //     { key: "Connection", value: "keep-alive" },
+  //   ],
+  //   cookies: [
+  //     { name: "sessionId", value: "abc123", domain: "example.com", path: "/", expires: "2023-12-31" },
+  //     { name: "theme", value: "dark", domain: "example.com", path: "/", expires: "2023-12-31" },
+  //   ],
+  //   testResults: [
+  //     { name: "Status Code Test", status: "Pass", message: "Expected 200, got 200" },
+  //     { name: "Response Time Test", status: "Fail", message: "Expected < 200ms, got 320ms" },
+  //   ],
+  //   notes: "This is a sample note about the response.",
+  // };
+
+  // Convert headers object to array for easier rendering
+  const headersArray = response?.headers
+    ? Object.entries(response.headers).map(([key, value]) => ({ key, value }))
+    : [];
+
+   
+
+    const cookiesArray = response?.cookies
+    ? Object.entries(response.cookies).map(([key, value]) => ({ key, value }))
+    : [];
+
+    const testResultArray = response?.testResults
+    ? Object.entries(response.testResults).map(([key, value]) => ({ key, value }))
+    : [];
+
+  const safeResponse = response || { headers: [], cookies: [], testResults: [], notes: "" };
 
   // Function to save response to file
   const saveResponseToFile = () => {
@@ -32,7 +49,7 @@ const ResponsePanel = () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "response.json";
+    a.download = "safeResponse.json";
     a.click();
     URL.revokeObjectURL(url);
     setIsMenuOpen(false);
@@ -40,7 +57,7 @@ const ResponsePanel = () => {
 
   // Function to save tests to file
   const saveTestsToFile = () => {
-    const blob = new Blob([JSON.stringify(response.testResults, null, 2)], { type: "application/json" });
+    const blob = new Blob([JSON.stringify(safeResponse.testResults, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -69,6 +86,12 @@ const ResponsePanel = () => {
     };
   }, [isMenuOpen]);
 
+  useEffect(() => {
+    console.log("response :", JSON.stringify(response, null, 2));
+    console.log("error debug: ", response)
+    console.log("oye idhr dekh: ",response)
+  }, [response]);
+
   return (
     <div className="bg-white-100 p-4 border border-gray-300 common-style-block" style={{ flexGrow: 1, overflow: "auto" }}>
       {/* Top Bar with Hamburger Menu on Top-Right */}
@@ -77,10 +100,10 @@ const ResponsePanel = () => {
         <div className="flex items-center space-x-4">
           <span className="text-lg font-semibold text-gray-800">Response</span>
           <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
-            {response.status}
+            {safeResponse.status}
           </span>
-          <span className="text-sm text-gray-500">Time: {response.time}</span>
-          <span className="text-sm text-gray-500">Size: {response.size}</span>
+          <span className="text-sm text-gray-500">Time: {safeResponse.time}</span>
+          <span className="text-sm text-gray-500">Size: {safeResponse.size}</span>
         </div>
 
         {/* Hamburger Menu on Top-Right */}
@@ -125,8 +148,16 @@ const ResponsePanel = () => {
         </div>
       </div>
 
-      {/* Tab Buttons for Headers, Cookies, Test Results, and Notes */}
+      {/* Tab Buttons for Body, Headers, Cookies, Test Results, and Notes */}
       <div className="flex space-x-4 mb-4">
+        <button
+          onClick={() => setActiveTab("body")}
+          className={`px-4 py-2 ${
+            activeTab === "body" ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-700"
+          } rounded-lg`}
+        >
+          Body
+        </button>
         <button
           onClick={() => setActiveTab("headers")}
           className={`px-4 py-2 ${
@@ -172,7 +203,7 @@ const ResponsePanel = () => {
               </tr>
             </thead>
             <tbody>
-              {response.headers.map((header, index) => (
+              {headersArray.map((header, index) => (
                 <tr key={index}>
                   <td className="px-4 py-2 border border-gray-300">{header.key}</td>
                   <td className="px-4 py-2 border border-gray-300">{header.value}</td>
@@ -197,7 +228,7 @@ const ResponsePanel = () => {
               </tr>
             </thead>
             <tbody>
-              {response.cookies.map((cookie, index) => (
+              {cookiesArray.map((cookie, index) => (
                 <tr key={index}>
                   <td className="px-4 py-2 border border-gray-300">{cookie.name}</td>
                   <td className="px-4 py-2 border border-gray-300">{cookie.value}</td>
@@ -223,7 +254,7 @@ const ResponsePanel = () => {
               </tr>
             </thead>
             <tbody>
-              {response.testResults.map((test, index) => (
+              {testResultArray.map((test, index) => (
                 <tr key={index}>
                   <td className="px-4 py-2 border border-gray-300">{test.name}</td>
                   <td className="px-4 py-2 border border-gray-300">
@@ -250,12 +281,21 @@ const ResponsePanel = () => {
             className="w-full p-4 border border-gray-300 rounded-lg bg-gray-100"
             rows="4"
             placeholder="Add notes about the response..."
-            value={response.notes}
+            value={safeResponse.notes}
             readOnly
           />
         </div>
       )}
+      {/* Response Body Section */}
+      {activeTab === "body" && (
+        <div className="mb-4">
+          <pre className="bg-gray-100 p-4 rounded-lg border border-gray-300 overflow-auto">
+            {JSON.stringify(response?.data || response.message, null, 2)}
+          </pre>
+        </div>
+      )}
     </div>
+    
   );
 };
 
