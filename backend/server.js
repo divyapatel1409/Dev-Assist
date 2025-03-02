@@ -1,7 +1,7 @@
+import 'dotenv/config'
 import express from 'express';
 import authRoute from './routes/authRoute.js';
 import db from './util/db.js'
-import 'dotenv/config'
 import { verifyToken } from './middleware/authMiddleware.js';
 
 const app = express();
