@@ -6,6 +6,14 @@ import ResponsePanel from "./ResponsePanel";
 /* Left Bottom block component HTML */
 const RequestResponsePanelWrapper = ({ isSidebarVisible }) => {
   const { topHeight, handleMouseDown } = useResizablePanel();
+  const [responseData , setResponseData] = useState(null)
+
+
+  const handleResponse = (response) => {
+    setResponseData(response);
+    console.log("response kya hai ?:" , response)
+  };
+
   const cssClass = isSidebarVisible
     ? "flex flex-col flex-grow"
     : "flex flex-col flex-grow pl-10";
@@ -13,7 +21,7 @@ const RequestResponsePanelWrapper = ({ isSidebarVisible }) => {
   return (
     <div className={cssClass}>
       {/* Right panel top block - Request Block */}
-      <RequestPanel topHeight={topHeight} />
+      <RequestPanel topHeight={topHeight} onResponse={handleResponse} />
 
       {/* Resizable Divider */}
       <div
@@ -23,7 +31,7 @@ const RequestResponsePanelWrapper = ({ isSidebarVisible }) => {
       ></div>
 
       {/* Right panel bottom block - Response Block */}
-      <ResponsePanel />
+      <ResponsePanel response = {responseData} />
     </div>
   );
 };

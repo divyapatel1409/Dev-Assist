@@ -1,6 +1,7 @@
+import axios from "axios";
 import React, { useState } from "react";
 
-const RequestPanel = ({ id, closeTab, topHeight }) => {
+const RequestPanel = ({ id, closeTab, topHeight, onResponse }) => {
   const [method, setMethod] = useState("GET");
   const [url, setUrl] = useState("");
   const [params, setParams] = useState([{ key: "", value: "" }]);
@@ -27,21 +28,52 @@ const RequestPanel = ({ id, closeTab, topHeight }) => {
 
   const [activeSection, setActiveSection] = useState("params");
 
-  const handleSendRequest = () => {
-    console.log({
-      method,
-      url,
-      params,
-      headers,
-      body,
-      authType,
-      username,
-      password,
-      testParam,
-      testValue,
-      variable,
-      setVarRows,
-    });
+  const handleSendRequest = async () => {
+    if(!url){
+      return alert("PLease enter a URL")
+    }
+    alert("handleSendRequest function executed!"); 
+    try {
+      const filteredHeaders = headers
+      .filter((header) => header.checked && header.key)
+      .reduce((acc, { key, value }) => ({ ...acc, [key]: value }), {});
+
+
+      const queryParams = params.reduce((acc, { key, value }) => {
+        if (key.trim() !== "") acc[key] = value;
+        return acc;
+      }, {});
+
+      if (authType === "BasicAuth") {
+        filteredHeaders["Authorization"] = `Basic ${btoa(
+          `${username}:${password}`
+        )}`;
+      } else if (authType === "BearerToken") {
+        filteredHeaders["Authorization"] = `Bearer ${password}`;
+      }
+
+      const config = {
+        method,
+        url,
+        params: queryParams,
+        headers: filteredHeaders,
+        data: method !== "GET" ? body : undefined,
+      };
+
+      console.log("Sending Request with Config:", config);
+
+    const response = await axios(config);
+
+    alert("Response Data:", response.data);
+    alert(`Response Data: ${JSON.stringify(response.data, null, 2)}`);
+    alert("Request sent successfully! Check the console for details.");
+    console.log(response)
+    onResponse(response);
+    } catch (error) {
+      console.error("Error:", error);
+    alert(`Request failed: ${error.message}`);
+    onResponse(error)
+    }
   };
 
   const handleParamChange = (index, field, value) => {

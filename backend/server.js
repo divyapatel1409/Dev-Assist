@@ -3,8 +3,12 @@ import authRoute from './routes/authRoute.js';
 import db from './util/db.js'
 import 'dotenv/config'
 import { verifyToken } from './middleware/authMiddleware.js';
+import cors from 'cors';
+
 
 const app = express();
+
+app.use(cors());
 
 app.use(express.json())
 
