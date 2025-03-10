@@ -1,6 +1,6 @@
 import Env from "../models/envModel.js";
 
-// Create a new environment
+//  Create a new environment
 export const createEnv = async (req, res) => {
   try {
     const { name, variables } = req.body;
@@ -19,7 +19,7 @@ export const createEnv = async (req, res) => {
   }
 };
 
-// Get all environments
+//  Get all environments
 export const getAllEnvs = async (req, res) => {
   try {
     const envs = await Env.find();
@@ -29,7 +29,7 @@ export const getAllEnvs = async (req, res) => {
   }
 };
 
-// Get a single environment by ID
+//  Get a single environment by ID
 export const getEnvById = async (req, res) => {
   try {
     const env = await Env.findById(req.params.id);
@@ -42,7 +42,7 @@ export const getEnvById = async (req, res) => {
   }
 };
 
-// Update an environment
+//  Update an environment
 export const updateEnv = async (req, res) => {
   try {
     const { name, variables } = req.body;

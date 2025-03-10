@@ -1,15 +1,12 @@
 import 'dotenv/config'
 import express from 'express';
 import authRoute from './routes/authRoute.js';
+import collectionRoute from './routes/collectionRoute.js';
 import envRoute from './routes/envRoute.js';
 import db from './util/db.js'
-<<<<<<< Updated upstream
-import { verifyToken } from './middleware/authMiddleware.js';
-=======
 import { verifyToken } from './middlewares/authMiddleware.js';
 import cors from 'cors';
 
->>>>>>> Stashed changes
 
 const app = express();
 
@@ -35,4 +32,4 @@ app.get('/private', verifyToken, (req, res)=>{
 // Auth Routes
 app.use('/api', authRoute);
 app.use('/api', verifyToken, envRoute);
-
+app.use('/api', verifyToken, collectionRoute);
