@@ -1,30 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
 
-const ResponsePanel = ({response}) => {
+const ResponsePanel = ({response, bottomHeight, isExpanded, onToggle }) => {
   const [activeTab, setActiveTab] = useState("headers");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuRef = useRef(null); // Ref for the dropdown menu
 
-  // Mock response data
-  // const response = {
-  //   status: "200 OK",
-  //   time: "320 ms",
-  //   size: "1.2 KB",
-  //   headers: [
-  //     { key: "Content-Type", value: "application/json" },
-  //     { key: "Cache-Control", value: "no-cache" },
-  //     { key: "Connection", value: "keep-alive" },
-  //   ],
-  //   cookies: [
-  //     { name: "sessionId", value: "abc123", domain: "example.com", path: "/", expires: "2023-12-31" },
-  //     { name: "theme", value: "dark", domain: "example.com", path: "/", expires: "2023-12-31" },
-  //   ],
-  //   testResults: [
-  //     { name: "Status Code Test", status: "Pass", message: "Expected 200, got 200" },
-  //     { name: "Response Time Test", status: "Fail", message: "Expected < 200ms, got 320ms" },
-  //   ],
-  //   notes: "This is a sample note about the response.",
-  // };
 
   // Convert headers object to array for easier rendering
   const headersArray = response?.headers
@@ -86,14 +66,9 @@ const ResponsePanel = ({response}) => {
     };
   }, [isMenuOpen]);
 
-  useEffect(() => {
-    console.log("response :", JSON.stringify(response, null, 2));
-    console.log("error debug: ", response)
-    console.log("oye idhr dekh: ",response)
-  }, [response]);
 
   return (
-    <div className="bg-white-100 p-4 border border-gray-300 common-style-block" style={{ flexGrow: 1, overflow: "auto" }}>
+    <div className="bg-white-100 p-4 border border-gray-300 relative" style={{ height: `${bottomHeight}px`, overflow: "auto" }}>
       {/* Top Bar with Hamburger Menu on Top-Right */}
       <div className="flex justify-between items-center mb-4">
         {/* Response Status and Meta Information */}
@@ -107,7 +82,8 @@ const ResponsePanel = ({response}) => {
         </div>
 
         {/* Hamburger Menu on Top-Right */}
-        <div className="relative" ref={menuRef}>
+        <div className="relative flex flex-row" ref={menuRef}>
+        
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg focus:outline-none"
@@ -149,7 +125,9 @@ const ResponsePanel = ({response}) => {
       </div>
 
       {/* Tab Buttons for Body, Headers, Cookies, Test Results, and Notes */}
-      <div className="flex space-x-4 mb-4">
+      {!isExpanded && (
+        <>
+        <div className="flex space-x-4 mb-4">
         <button
           onClick={() => setActiveTab("body")}
           className={`px-4 py-2 ${
@@ -294,6 +272,9 @@ const ResponsePanel = ({response}) => {
           </pre>
         </div>
       )}
+        </>
+      )}
+      
     </div>
     
   );

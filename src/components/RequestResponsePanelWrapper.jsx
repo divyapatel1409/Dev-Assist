@@ -5,23 +5,45 @@ import ResponsePanel from "./ResponsePanel";
 
 /* Left Bottom block component HTML */
 const RequestResponsePanelWrapper = ({ isSidebarVisible }) => {
-  const { topHeight, handleMouseDown } = useResizablePanel();
+  const { topHeight,bottomHeight, handleMouseDown } = useResizablePanel();
   const [responseData , setResponseData] = useState(null)
+  const [expandedPanel, setExpandedPanel] = useState(null);
 
 
   const handleResponse = (response) => {
     setResponseData(response);
-    console.log("response kya hai ?:" , response)
   };
 
   const cssClass = isSidebarVisible
     ? "flex flex-col flex-grow"
     : "flex flex-col flex-grow pl-10";
+
+    // Function to handle minimize/maximize
+  const handleMinimize = (panel) => {
+    if (expandedPanel === panel) {
+      // If already expanded, restore to 50-50
+      setExpandedPanel(null);
+    } else {
+      // Expand the clicked panel
+      setExpandedPanel(panel);
+    }
+  };
     
   return (
     <div className={cssClass}>
       {/* Right panel top block - Request Block */}
-      <RequestPanel topHeight={topHeight} onResponse={handleResponse} />
+      <div
+        className={`transition-all duration-300 ${
+          expandedPanel === "response" ? "h-0" : expandedPanel === "request" ? "h-full" : `${topHeight}px`
+        }`}
+      >
+        <RequestPanel
+          topHeight={topHeight}
+          onResponse={handleResponse}
+          isExpanded={expandedPanel === "request"}
+          onToggle={() => handleMinimize("request")}
+        />
+      </div>
 
       {/* Resizable Divider */}
       <div
@@ -31,7 +53,18 @@ const RequestResponsePanelWrapper = ({ isSidebarVisible }) => {
       ></div>
 
       {/* Right panel bottom block - Response Block */}
-      <ResponsePanel response = {responseData} />
+      <div
+        className={`transition-all duration-300 ${
+          expandedPanel === "request" ? "h-0" : expandedPanel === "response" ? "h-full" : `${bottomHeight}px`
+        }`}
+      >
+        <ResponsePanel
+          response={responseData}
+          bottomHeight={bottomHeight}
+          isExpanded={expandedPanel === "response"}
+          onToggle={() => handleMinimize("response")}
+        />
+      </div>
     </div>
   );
 };

@@ -5,6 +5,8 @@ const useResizablePanel = () => {
     const [topHeight, setTopHeight] = useState(initialHeight);
     const [isResizing, setIsResizing] = useState(false);
 
+    const bottomHeight = window.innerHeight - topHeight - 1; 
+
     const handleMouseDown = () => {
         setIsResizing(true);
     };
@@ -36,7 +38,7 @@ const useResizablePanel = () => {
         };
     }, [isResizing]);
 
-    return { topHeight, handleMouseDown };
+    return { topHeight,bottomHeight, handleMouseDown };
 };
 
 export default useResizablePanel;

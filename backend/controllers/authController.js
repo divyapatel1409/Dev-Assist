@@ -67,15 +67,25 @@ const register = async (req, res) => {
 		const { name, email, password } = req.body;
 		console.log(name, email, password )
 
+		const isValidEmail = (email) => {
+			const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+			return emailRegex.test(email);
+		  };
+
 		// Check for required fields
-		if (!(name && email && password)) {
-			return res.send({ success: false, message: 'Please enter all of the required fields' });
-		}
+		if (!email || !password) {
+			return res.status(400).send({ success: false, message: "Please enter all required fields" });
+		  }
+		  
+		  if (!isValidEmail(email)) {
+			return res.status(422).send({ success: false, message: "Invalid email format" });
+		  }
+		  
 
 		// Checking if user already exists
 		const exists = await userModel.findOne({ email });
 		if (exists) {
-			return res.send({ success: false, message: 'user already exists' });
+			return res.status(409).send({ success: false, message: 'user already exists' });
 		}
 
 		// validation
