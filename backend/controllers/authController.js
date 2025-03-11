@@ -1,4 +1,4 @@
-import userModel from "../model/userModel.js";
+import userModel from "../models/userModel.js";
 import db from "../util/db.js";
 import jwt from 'jsonwebtoken'
 import validator from 'validator'
