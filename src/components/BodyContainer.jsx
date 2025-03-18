@@ -1,15 +1,16 @@
-import React, { useState,useContext, useEffect } from "react";
-import Sidebar from "./sidebar";
+import React, { useState, useContext, useEffect } from "react";
+import SidebarWrapper from "./SidebarWrapper";
 import RequestResponsePanelWrapper from "./RequestResponsePanelWrapper";
 import { FiMenu } from "react-icons/fi";
 import AccountWrapper from "./AccountWrapper";
 import { AuthContext } from "../context/AuthContext";
-
+import RegexHelperWrapper from "./RegexHelperWrapper";
+import {TabsConstants} from '../constants/Common'
 
 const BodyContainer = () => {
   const [isSidebarVisible, setIsSidebarVisible] = useState(true);
-  const [accountFormVisible, setAccountFormVisible] = useState(false);
-  const { user,setUser } = useContext(AuthContext);
+  const { user, setUser } = useContext(AuthContext);
+  const [activeTab, setActiveTab] = useState(TabsConstants.API_HELPER);
 
   const toggleSidebar = () => {
     setIsSidebarVisible(!isSidebarVisible);
@@ -19,43 +20,84 @@ const BodyContainer = () => {
     setUser(null); // Clear user from context
   };
 
-  useEffect(() => {
-    if (user) {
-      setAccountFormVisible(false);
+  const getComponent = () => {
+    switch (activeTab) {
+      case TabsConstants.ACCOUNT:
+        return <AccountWrapper />;
+      case TabsConstants.API_HELPER:
+        return <RequestResponsePanelWrapper />;
+      case TabsConstants.REGEX_HELPER:
+        return <RegexHelperWrapper />;
+      default:
+        return <RegexHelperWrapper />;
     }
   }
-  , [user]);
+
+  useEffect(() => {
+    if (user) {
+      setActiveTab(TabsConstants.API_HELPER);
+    }
+  }, [user]);
 
   return (
-    <div className="flex flex-col h-screen text-black bg-gray-100">
-      <nav className="flex items-center justify-between bg-white h-12 pr-4 border-b border-gray-300 shadow-sm">
-      {/* Left: Sidebar Toggle Button */}
-        <button 
-          onClick={toggleSidebar} 
-          className="text-gray-700 hover:bg-gray-200 transition-all p-2 rounded-md ml-0"
+    <div className="flex flex-col h-screen text-black">
+      <nav className="flex items-center justify-between bg-white h-12 px-4 border-b border-gray-300 shadow-sm">
+        {/* Left: Sidebar Toggle Button + Tabs */}
+        <div className="flex items-center space-x-4">
+          <button
+            onClick={toggleSidebar}
+            className="text-gray-700 hover:bg-gray-200 transition-all p-2 rounded-md"
           >
-          <FiMenu size={20} />
-        </button>
+            <FiMenu size={20} />
+          </button>
+          <div className="flex border-b">
+            <button
+              className={`px-4 py-2 ${
+                activeTab === TabsConstants.API_HELPER
+                  ? "border-b-2 border-black"
+                  : "text-gray-500"
+              }`}
+              onClick={() => setActiveTab(TabsConstants.API_HELPER)}
+            >
+              API Helper
+            </button>
+            <button
+              className={`px-4 py-2 ${
+                activeTab === TabsConstants.REGEX_HELPER
+                  ? "border-b-2 border-black"
+                  : "text-gray-500"
+              }`}
+              onClick={() => setActiveTab(TabsConstants.REGEX_HELPER)}
+            >
+              Regex Helper
+            </button>
+          </div>
+        </div>
 
-        {/* Middle: Title */}
-        <h1 className="text-md font-semibold tracking-wide text-gray-800">DevAssist</h1>
+        {/* Middle: Title (Header) */}
+        <h1 className="text-md font-semibold tracking-wide text-gray-800 mx-auto">
+          DevAssist
+        </h1>
 
         {/* Right: User/Login Actions */}
         <div>
           {user ? (
             <div className="flex items-center space-x-4">
-              <span className="font-medium text-sm text-gray-700">{user.email}</span>
+              <span className="font-medium text-sm text-gray-700">
+                {user.email}
+              </span>
               <button
                 onClick={handleLogout}
-                className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md text-sm transition-all"
+                className="d-btn-small d-btn-secondary"
               >
                 Logout
               </button>
             </div>
           ) : (
             <button
-             onClick={() => setAccountFormVisible(true)} 
-              className="bg-indigo-500 text-white hover:bg-indigo-600 px-3 py-1 rounded-md text-sm transition-all">
+              onClick={() => setActiveTab(TabsConstants.ACCOUNT)}
+              className="d-btn-small d-btn-primary"
+            >
               Login
             </button>
           )}
@@ -65,11 +107,11 @@ const BodyContainer = () => {
       {/* Main Content Below Navbar */}
       <div className="flex flex-1">
         {/* Left Sidebar */}
-        {isSidebarVisible && <Sidebar />}
+        {isSidebarVisible && <SidebarWrapper activeTab={activeTab} />}
 
         {/* Main Content */}
         <div className="flex-1 w-full">
-          {accountFormVisible ?<AccountWrapper />: <RequestResponsePanelWrapper /> }
+         {getComponent()}
         </div>
       </div>
     </div>

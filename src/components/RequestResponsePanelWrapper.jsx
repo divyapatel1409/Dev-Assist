@@ -16,7 +16,7 @@ const RequestResponsePanelWrapper = ({ isSidebarVisible }) => {
 
   const cssClass = isSidebarVisible
     ? "flex flex-col flex-grow"
-    : "flex flex-col flex-grow pl-10";
+    : "flex flex-col flex-grow";
 
     // Function to handle minimize/maximize
   const handleMinimize = (panel) => {

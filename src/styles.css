@@ -1,5 +1,4 @@
 @import "tailwindcss";
-
 body {
   font-family: Arial, sans-serif; 
   background-color: white;   
@@ -7,4 +6,54 @@ body {
 
 .common-style-block {
   height: 50%;
+}
+
+@layer components {
+  /* Sidebar Styles */
+  .sidebar {
+    @apply w-64 bg-gray-200 p-4 h-screen;
+  }
+  .sidebar-item {
+    @apply p-2 hover:bg-gray-300 cursor-pointer;
+  }
+  .sidebar-item-active {
+    @apply bg-gray-300;
+  }
+
+  /* Button Styles */
+  .d-btn {
+    @apply px-4 py-2 rounded;
+  }
+
+  .d-btn-small {
+    @apply px-2 py-1 rounded;
+  }
+
+  .d-btn-icon {
+    @apply px-2 py-1 rounded-full;
+  }
+
+  .d-btn-primary {
+    @apply bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition-all duration-300 ease-in-out;
+  }
+  .d-btn-secondary {
+    @apply bg-gray-600 text-white font-semibold rounded-lg shadow-md hover:bg-gray-700 transition-all duration-300 ease-in-out;
+  }
+  .d-btn-success {
+    @apply bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 transition-all duration-300 ease-in-out;
+  }
+  .d-btn-warning {
+    @apply bg-yellow-600 text-white font-semibold rounded-lg shadow-md hover:bg-yellow-700 transition-all duration-300 ease-in-out;
+  }
+  .d-btn-info {
+    @apply bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition-all duration-300 ease-in-out;
+  }
+  .d-btn-danger {
+    @apply  bg-red-600 text-white font-semibold rounded-lg shadow-md hover:bg-red-700 transition-all duration-300 ease-in-out;
+  }
+
+  /* Input Styles */
+  .d-input-field {
+    @apply px-4 py-2 border rounded-lg;
+  }
 }
