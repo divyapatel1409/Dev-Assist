@@ -1,4 +1,4 @@
-import React, { useReducer,useState } from "react";
+import React, { useReducer,useState,useEffect } from "react";
 import axios from "axios";
 import { requestReducer, initialState } from "./requestPanelComponents/requestReducer";
 import ParamsSection from "./requestPanelComponents/ParamsSection";
@@ -7,21 +7,163 @@ import HeadersSection from "./requestPanelComponents/HeadersSection";
 import BodySection from "./requestPanelComponents/BodySection";
 import TestsSection from "./requestPanelComponents/TestsSection";
 import SetVarSection from "./requestPanelComponents/SetVarSection";
+import { getCollections, createCollection } from "../services/collectionService.js";
+import { getEnvironments } from "../services/envService.js";
+import { replaceEnvVariables, processObjectWithEnvVars } from '../utils/environmentUtils.js';
+import { createEnvironment } from "../services/envService.js";
 
 const RequestPanel = ({ id,isExpanded, onToggle, topHeight, onResponse }) => {
   const [state, dispatch] = useReducer(requestReducer, initialState);
   const [isMinimized, setIsMinimized] = useState(false);
   const [isMaximized, setIsMaximized] = useState(false);
+  const [collections, setCollections] = useState([]);
+  const [environments, setEnvironments] = useState([]);
+  const [selectedCollection, setSelectedCollection] = useState("");
+  const [selectedEnvironment, setSelectedEnvironment] = useState("");
+  const [showNewCollection, setShowNewCollection] = useState(false);
+  const [newCollectionName, setNewCollectionName] = useState("");
+  const [showNewEnvironment, setShowNewEnvironment] = useState(false);
+  const [newEnvironmentName, setNewEnvironmentName] = useState("");
+  const [environmentVariables, setEnvironmentVariables] = useState([
+    { key: "", value: "" }
+  ]);
+
+
+  // Fetch collections and environments on component mount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const collectionsResponse = await getCollections();
+        if (collectionsResponse.success) {
+          setCollections(collectionsResponse.data);
+        }
+        
+        const environmentsResponse = await getEnvironments();
+        if (environmentsResponse.success) {
+          setEnvironments(environmentsResponse.data);
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+    
+    fetchData();
+  }, []);
+
+   // Function to handle creating a new collection
+   const handleCreateCollection = async () => {
+    if (!newCollectionName.trim()) {
+      alert("Please enter a collection name");
+      return;
+    }
+    
+    try {
+      console.log("newCollectionName",typeof newCollectionName)
+      const response = await createCollection({ name: newCollectionName });
+      if (response.success) {
+        setCollections([...collections, response.data]);
+        setSelectedCollection(response.data._id);
+        setNewCollectionName("");
+        setShowNewCollection(false);
+      }
+    } catch (error) {
+      console.error("Error creating collection:", error);
+    }
+  };
+
+   // Function to replace environment variables in string
+   const replaceEnvVariables = (str, variables) => {
+    if (!str || !variables) return str;
+    
+    let result = str;
+    variables.forEach(variable => {
+      // Replace {{variableName}} with its value
+      const pattern = new RegExp(`{{${variable.key}}}`, 'g');
+      result = result.replace(pattern, variable.value);
+    });
+    
+    return result;
+  };
+
+  // Function to handle creating a new environment
+  const handleCreateEnvironment = async () => {
+    if (!newEnvironmentName.trim()) {
+      alert("Please enter an environment name");
+      return;
+    }
+
+    // Filter out empty variables
+    const filteredVariables = environmentVariables.filter(
+      variable => variable.key.trim() !== ""
+    );
+    
+    try {
+      const response = await createEnvironment({
+        name: newEnvironmentName,
+        variables: filteredVariables
+      });
+      
+      if (response.success) {
+        setEnvironments([...environments, response.data]);
+        setSelectedEnvironment(response.data._id);
+        setNewEnvironmentName("");
+        setEnvironmentVariables([{ key: "", value: "" }]);
+        setShowNewEnvironment(false);
+      }
+    } catch (error) {
+      console.error("Error creating environment:", error);
+    }
+  };
+
+  // Add a new variable row
+  const addEnvironmentVariable = () => {
+    setEnvironmentVariables([...environmentVariables, { key: "", value: "" }]);
+  };
+  
+  // Update variable at specific index
+  const updateEnvironmentVariable = (index, field, value) => {
+    const newVariables = [...environmentVariables];
+    newVariables[index][field] = value;
+    setEnvironmentVariables(newVariables);
+  };
+  
+  // Remove variable at specific index
+  const removeEnvironmentVariable = (index) => {
+    if (environmentVariables.length > 1) {
+      const newVariables = [...environmentVariables];
+      newVariables.splice(index, 1);
+      setEnvironmentVariables(newVariables);
+    }
+  };
+
 
   const handleSendRequest = async () => {
     if (!state.url) return alert("Please enter a URL");
+    
     try {
+      // Get environment variables if an environment is selected
+      let envVariables = [];
+      if (selectedEnvironment) {
+        const env = environments.find(env => env._id === selectedEnvironment);
+        if (env) {
+          envVariables = env.variables;
+        }
+      }
+      
       const filteredHeaders = state.headers
         .filter((header) => header.checked && header.key)
-        .reduce((acc, { key, value }) => ({ ...acc, [key]: value }), {});
+        .reduce((acc, { key, value }) => {
+          // Replace environment variables in header values
+          const processedValue = replaceEnvVariables(value, envVariables);
+          return { ...acc, [key]: processedValue };
+        }, {});
 
       const queryParams = state.params.reduce((acc, { key, value }) => {
-        if (key.trim() !== "") acc[key] = value;
+        if (key.trim() !== "") {
+          // Replace environment variables in param values
+          const processedValue = replaceEnvVariables(value, envVariables);
+          acc[key] = processedValue;
+        }
         return acc;
       }, {});
 
@@ -31,20 +173,48 @@ const RequestPanel = ({ id,isExpanded, onToggle, topHeight, onResponse }) => {
         filteredHeaders["Authorization"] = `Bearer ${state.password}`;
       }
 
+      // Replace environment variables in URL
+      const processedUrl = replaceEnvVariables(state.url, envVariables);
+      
+      // Replace environment variables in the body if it's a POST/PUT request
+      let processedBody = state.body;
+      if (state.method !== "GET" && state.body) {
+        processedBody = replaceEnvVariables(state.body, envVariables);
+      }
+
       const config = {
         method: state.method,
-        url: state.url,
+        url: processedUrl,
         params: queryParams,
         headers: filteredHeaders,
-        data: state.method !== "GET" ? state.body : undefined,
+        data: state.method !== "GET" ? processedBody : undefined,
       };
-
+      console.log("Request headers:", filteredHeaders);
       const response = await axios(config);
       onResponse(response);
-    } catch (error) {
-      onResponse(error);
+     // Save request to collection if one is selected
+     if (selectedCollection && response) {
+      try {
+        await axios.post('http://localhost:5000/api/request', {
+          method: state.method,
+          url: state.url,
+          headers: filteredHeaders,
+          body: state.body,
+          params: queryParams,
+          collectionId: selectedCollection
+        }, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+      } catch (error) {
+        console.error("Error saving request to collection:", error);
+      }
     }
-  };
+  } catch (error) {
+    onResponse(error);
+  }
+};
 
   return (
     <div className= "bg-white-100 p-4 border border-gray-300 relative"
@@ -63,6 +233,7 @@ const RequestPanel = ({ id,isExpanded, onToggle, topHeight, onResponse }) => {
 
       {!isExpanded && (
         <>
+        
         {/* HTTP Method, URL, and Send Button */}
       <div className="flex space-x-4 mb-4 items-center">
       <select value={state.method} onChange={(e) => dispatch({ type: "SET_METHOD", payload: e.target.value })} className="px-4 py-2 border border-gray-300 rounded-lg w-28 bg-gray-100">
