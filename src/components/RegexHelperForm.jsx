@@ -10,35 +10,35 @@ export default function RegexHelperForm() {
   const [copyStatus, setCopyStatus] = useState(""); // State for feedback
 
   // Regex Examples
-  const regexExamples = [
-    {
-      name: "Email",
-      pattern: "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",
-    },
-    {
-      name: "Phone Number",
-      pattern:
-        "^\\+?[0-9]{1,4}?[-.\\s]?\\(?[0-9]{1,3}?\\)?[-.\\s]?[0-9]{3,4}[-.\\s]?[0-9]{3,4}$",
-    },
-    {
-      name: "URL",
-      pattern:
-        "^(https?:\\/\\/)?(www\\.)?[a-zA-Z0-9-]+(\\.[a-zA-Z]{2,6})+(\\/[a-zA-Z0-9@:%_+.~#?&//=]*)?$",
-    },
-    {
-      name: "IPv4 Address",
-      pattern:
-        "^((25[0-5]|2[0-4][0-9]|[0-1]?[0-9][0-9]?)\\.){3}(25[0-5]|2[0-4][0-9]|[0-1]?[0-9][0-9]?)$",
-    },
-    {
-      name: "Hex Color",
-      pattern: "^#?([a-fA-F0-9]{6}|[a-fA-F0-9]{3})$",
-    },
-    {
-      name: "Password (8+ chars, 1 letter, 1 number)",
-      pattern: "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{8,}$",
-    },
-  ];
+  // const regexExamples = [
+  //   {
+  //     name: "Email",
+  //     pattern: "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",
+  //   },
+  //   {
+  //     name: "Phone Number",
+  //     pattern:
+  //       "^\\+?[0-9]{1,4}?[-.\\s]?\\(?[0-9]{1,3}?\\)?[-.\\s]?[0-9]{3,4}[-.\\s]?[0-9]{3,4}$",
+  //   },
+  //   {
+  //     name: "URL",
+  //     pattern:
+  //       "^(https?:\\/\\/)?(www\\.)?[a-zA-Z0-9-]+(\\.[a-zA-Z]{2,6})+(\\/[a-zA-Z0-9@:%_+.~#?&//=]*)?$",
+  //   },
+  //   {
+  //     name: "IPv4 Address",
+  //     pattern:
+  //       "^((25[0-5]|2[0-4][0-9]|[0-1]?[0-9][0-9]?)\\.){3}(25[0-5]|2[0-4][0-9]|[0-1]?[0-9][0-9]?)$",
+  //   },
+  //   {
+  //     name: "Hex Color",
+  //     pattern: "^#?([a-fA-F0-9]{6}|[a-fA-F0-9]{3})$",
+  //   },
+  //   {
+  //     name: "Password (8+ chars, 1 letter, 1 number)",
+  //     pattern: "^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{8,}$",
+  //   },
+  // ];
 
   // Auto-test on change
   useEffect(() => {
@@ -70,7 +70,7 @@ export default function RegexHelperForm() {
         <h1 className="text-2xl font-bold mb-4">🔍 Regex Helper</h1>
 
         {/* Regex Selection */}
-        <div className="mb-4">
+        {/* <div className="mb-4">
           <label className="block font-semibold">Select a Regex Example:</label>
           <select
             className="w-full p-2 border rounded"
@@ -83,7 +83,7 @@ export default function RegexHelperForm() {
               </option>
             ))}
           </select>
-        </div>
+        </div> */}
 
         {/* Regex Input with Copy Button */}
         <div className="mb-4 flex items-center">
@@ -104,7 +104,7 @@ export default function RegexHelperForm() {
                   : "bg-blue-500 text-white hover:bg-blue-700"
               }`}
             >
-              {copyStatus || "Copy Regex"}
+              {copyStatus || "Copy"}
             </button>
           </div>
         </div>
@@ -164,6 +164,17 @@ export default function RegexHelperForm() {
           >
             Clear
           </button>
+					<button
+            onClick={() => {
+              setRegex("");
+              setTestString("");
+              setMatches([]);
+              setError("");
+            }}
+            className="px-4 py-2 bg-blue-500  text-white rounded "
+          >
+            Save
+          </button>
         </div>
 
         {/* Results */}
@@ -217,7 +228,7 @@ export default function RegexHelperForm() {
           )}
         </div>
       </div>
-      <RegexCommunityHelper />
+      <RegexCommunityHelper setRegex={setRegex} />
 		</div>
     </>
   );

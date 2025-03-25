@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-export default function RegexCommunityHelper() {
+export default function RegexCommunityHelper({setRegex}) {
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState("community");
 
@@ -54,7 +54,7 @@ export default function RegexCommunityHelper() {
       <div className="space-y-4">
         {filteredRegex.length > 0 ? (
           filteredRegex.map((regex) => (
-            <div key={regex.id} className="p-4 bg-white rounded-lg shadow">
+            <div key={regex.id} onClick={()=> setRegex(regex.pattern)} className="p-4 bg-white rounded-lg shadow">
               <p className="text-lg font-mono text-blue-600">{regex.pattern}</p>
               <p className="text-sm text-gray-600">{regex.description}</p>
             </div>
