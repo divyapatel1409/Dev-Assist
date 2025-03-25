@@ -12,7 +12,9 @@ const BodyContainer = () => {
   const { user, setUser } = useContext(AuthContext);
   const [activeTab, setActiveTab] = useState(TabsConstants.API_HELPER);
   const [isMobile, setIsMobile] = useState(false);
-
+    // State to manage the list of open requests
+    const [requests, setRequests] = useState([]);
+    
   // Check if the screen is mobile or tablet
   useEffect(() => {
     const checkScreenSize = () => {

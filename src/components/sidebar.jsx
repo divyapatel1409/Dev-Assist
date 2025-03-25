@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import PayPalDonation from './PayPalDonation';
 
 // Reusable ToggleButton Component
 const ToggleButton = ({ option, selectedOption, handleOptionSelect }) => (
@@ -309,6 +310,9 @@ const Sidebar = ({ onNewRequest, isSidebarVisible }) => {
                 )}
               </AnimatePresence>
             </motion.div>
+          </div>
+          <div className="mt-auto">
+            <PayPalDonation />
           </div>
         </motion.div>
       )}
