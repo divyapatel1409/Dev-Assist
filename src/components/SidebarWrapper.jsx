@@ -1,9 +1,13 @@
 import React from "react";
 import Sidebar from "./Sidebar";
-import {TabsConstants} from '../constants/Common'
 
-const SidebarWrapper = ({activeTab}) => {
-  return activeTab===TabsConstants.API_HELPER ?<Sidebar />:"";
+const SidebarWrapper = ({ activeTab, onNewRequest, isSidebarVisible }) => {
+  // Only render the Sidebar component for API_HELPER tab
+  return (
+    <div className="h-full">
+      <Sidebar onNewRequest={onNewRequest} isSidebarVisible={isSidebarVisible} />
+    </div>
+  );
 };
 
 export default SidebarWrapper;
