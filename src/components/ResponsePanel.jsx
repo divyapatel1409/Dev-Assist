@@ -268,7 +268,7 @@ const ResponsePanel = ({response, bottomHeight, isExpanded, onToggle }) => {
       {activeTab === "body" && (
         <div className="mb-4">
           <pre className="bg-gray-100 p-4 rounded-lg border border-gray-300 overflow-auto">
-            {JSON.stringify(response?.data || response.message, null, 2)}
+            {JSON.stringify(response?.data || response?.message, null, 2)}
           </pre>
         </div>
       )}
