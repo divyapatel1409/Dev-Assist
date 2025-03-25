@@ -1,16 +1,32 @@
 import React, { useState } from "react";
 import useResizablePanel from "../hooks/useResizablePanel";
-import RequestPanel from "./RequestPanel";
+import MultiReqTab from "./MultiReqTab"; // Make sure the import name matches the file name
 import ResponsePanel from "./ResponsePanel";
 
-/* Left Bottom block component HTML */
 const RequestResponsePanelWrapper = ({ isSidebarVisible }) => {
-  const { topHeight,bottomHeight, handleMouseDown } = useResizablePanel();
-  const [responseData , setResponseData] = useState(null)
+  const { topHeight, bottomHeight, handleMouseDown } = useResizablePanel();
+  const [responseData, setResponseData] = useState(null);
   const [expandedPanel, setExpandedPanel] = useState(null);
 
+  // State to manage the list of open requests
+  const [requests, setRequests] = useState([]);
+  // State to track the currently active tab
+  const [activeTab, setActiveTab] = useState(null);
 
-  const handleResponse = (response) => {
+  // Function to create a new request
+  const handleNewRequest = () => {
+    const newRequest = {
+      id: `request-${Date.now()}`, // Unique ID for the request
+      url: "", // Default URL (can be empty initially)
+      method: "GET", // Default HTTP method
+      isExpanded: true, // Whether the request panel is expanded
+    };
+    setRequests((prevRequests) => [...prevRequests, newRequest]); // Add the new request to the list
+    setActiveTab(newRequest.id); // Set the new request as the active tab
+  };
+
+  // Function to handle response from a request
+  const handleResponse = (id, response) => {
     setResponseData(response);
   };
 
@@ -18,7 +34,7 @@ const RequestResponsePanelWrapper = ({ isSidebarVisible }) => {
     ? "flex flex-col flex-grow"
     : "flex flex-col flex-grow";
 
-    // Function to handle minimize/maximize
+  // Function to handle minimize/maximize
   const handleMinimize = (panel) => {
     if (expandedPanel === panel) {
       // If already expanded, restore to 50-50
@@ -28,7 +44,7 @@ const RequestResponsePanelWrapper = ({ isSidebarVisible }) => {
       setExpandedPanel(panel);
     }
   };
-    
+
   return (
     <div className={cssClass}>
       {/* Right panel top block - Request Block */}
@@ -37,11 +53,13 @@ const RequestResponsePanelWrapper = ({ isSidebarVisible }) => {
           expandedPanel === "response" ? "h-0" : expandedPanel === "request" ? "h-full" : `${topHeight}px`
         }`}
       >
-        <RequestPanel
-          topHeight={topHeight}
-          onResponse={handleResponse}
-          isExpanded={expandedPanel === "request"}
-          onToggle={() => handleMinimize("request")}
+        <MultiReqTab
+          requests={requests}
+          setRequests={setRequests}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          onNewRequest={handleNewRequest} // Pass the function to MultiReqTab
+          onResponseReceived={handleResponse}
         />
       </div>
 
