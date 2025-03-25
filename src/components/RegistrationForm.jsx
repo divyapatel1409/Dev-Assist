@@ -15,7 +15,13 @@ const RegistrationForm = () => {
 
   const validate = () => {
     const errors = {};
-    if (!name.trim()) errors.name = "Name is required";
+    if (!name.trim()) {
+      errors.name = "Name is required";
+    } else if (!/^[A-Za-z\s'-]+$/.test(name)) {
+      errors.name = "Name can only contain letters, spaces, apostrophes, and hyphens";
+    } else if (name.trim().length < 2) {
+      errors.name = "Name must be at least 2 characters long";
+    }
     if (!email) {
       errors.email = "Email is required";
     } else if (!/\S+@\S+\.\S+/.test(email)) {
