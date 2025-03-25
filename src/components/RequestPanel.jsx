@@ -1,4 +1,4 @@
-import React, { useReducer, useState, useRef } from "react";
+import React, { useReducer, useState, useRef,useEffect } from "react";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import { requestReducer, initialState } from "./requestPanelComponents/requestReducer";
@@ -8,6 +8,10 @@ import HeadersSection from "./requestPanelComponents/HeadersSection";
 import BodySection from "./requestPanelComponents/BodySection";
 import TestsSection from "./requestPanelComponents/TestsSection";
 import SetVarSection from "./requestPanelComponents/SetVarSection";
+import { getCollections, createCollection } from "../services/collectionService.js";
+import { getEnvironments } from "../services/envService.js";
+import { replaceEnvVariables, processObjectWithEnvVars } from '../utils/environmentUtils.js';
+import { createEnvironment } from "../services/envService.js";
 
 const RequestPanel = ({ id, isExpanded, onToggle, topHeight, onResponse }) => {
   const [state, dispatch] = useReducer(requestReducer, initialState);
@@ -54,6 +58,126 @@ const RequestPanel = ({ id, isExpanded, onToggle, topHeight, onResponse }) => {
     { id: "tests", label: "Tests", icon: "M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" },
     { id: "setVar", label: "Set Var", icon: "M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" },
   ];
+  const [collections, setCollections] = useState([]);
+  const [environments, setEnvironments] = useState([]);
+  const [selectedCollection, setSelectedCollection] = useState("");
+  const [selectedEnvironment, setSelectedEnvironment] = useState("");
+  const [showNewCollection, setShowNewCollection] = useState(false);
+  const [newCollectionName, setNewCollectionName] = useState("");
+  const [showNewEnvironment, setShowNewEnvironment] = useState(false);
+  const [newEnvironmentName, setNewEnvironmentName] = useState("");
+  const [environmentVariables, setEnvironmentVariables] = useState([
+    { key: "", value: "" }
+  ]);
+
+
+  // Fetch collections and environments on component mount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const collectionsResponse = await getCollections();
+        if (collectionsResponse.success) {
+          setCollections(collectionsResponse.data);
+        }
+        
+        const environmentsResponse = await getEnvironments();
+        if (environmentsResponse.success) {
+          setEnvironments(environmentsResponse.data);
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+    
+    fetchData();
+  }, []);
+
+   // Function to handle creating a new collection
+   const handleCreateCollection = async () => {
+    if (!newCollectionName.trim()) {
+      alert("Please enter a collection name");
+      return;
+    }
+    
+    try {
+      console.log("newCollectionName",typeof newCollectionName)
+      const response = await createCollection({ name: newCollectionName });
+      if (response.success) {
+        setCollections([...collections, response.data]);
+        setSelectedCollection(response.data._id);
+        setNewCollectionName("");
+        setShowNewCollection(false);
+      }
+    } catch (error) {
+      console.error("Error creating collection:", error);
+    }
+  };
+
+   // Function to replace environment variables in string
+   const replaceEnvVariables = (str, variables) => {
+    if (!str || !variables) return str;
+    
+    let result = str;
+    variables.forEach(variable => {
+      // Replace {{variableName}} with its value
+      const pattern = new RegExp(`{{${variable.key}}}`, 'g');
+      result = result.replace(pattern, variable.value);
+    });
+    
+    return result;
+  };
+
+  // Function to handle creating a new environment
+  const handleCreateEnvironment = async () => {
+    if (!newEnvironmentName.trim()) {
+      alert("Please enter an environment name");
+      return;
+    }
+
+    // Filter out empty variables
+    const filteredVariables = environmentVariables.filter(
+      variable => variable.key.trim() !== ""
+    );
+    
+    try {
+      const response = await createEnvironment({
+        name: newEnvironmentName,
+        variables: filteredVariables
+      });
+      
+      if (response.success) {
+        setEnvironments([...environments, response.data]);
+        setSelectedEnvironment(response.data._id);
+        setNewEnvironmentName("");
+        setEnvironmentVariables([{ key: "", value: "" }]);
+        setShowNewEnvironment(false);
+      }
+    } catch (error) {
+      console.error("Error creating environment:", error);
+    }
+  };
+
+  // Add a new variable row
+  const addEnvironmentVariable = () => {
+    setEnvironmentVariables([...environmentVariables, { key: "", value: "" }]);
+  };
+  
+  // Update variable at specific index
+  const updateEnvironmentVariable = (index, field, value) => {
+    const newVariables = [...environmentVariables];
+    newVariables[index][field] = value;
+    setEnvironmentVariables(newVariables);
+  };
+  
+  // Remove variable at specific index
+  const removeEnvironmentVariable = (index) => {
+    if (environmentVariables.length > 1) {
+      const newVariables = [...environmentVariables];
+      newVariables.splice(index, 1);
+      setEnvironmentVariables(newVariables);
+    }
+  };
+
 
   const handleSendRequest = async () => {
     if (!state.url) {
@@ -68,12 +192,29 @@ const RequestPanel = ({ id, isExpanded, onToggle, topHeight, onResponse }) => {
     
     setIsLoading(true);
     try {
+      // Get environment variables if an environment is selected
+      let envVariables = [];
+      if (selectedEnvironment) {
+        const env = environments.find(env => env._id === selectedEnvironment);
+        if (env) {
+          envVariables = env.variables;
+        }
+      }
+      
       const filteredHeaders = state.headers
         .filter((header) => header.checked && header.key)
-        .reduce((acc, { key, value }) => ({ ...acc, [key]: value }), {});
+        .reduce((acc, { key, value }) => {
+          // Replace environment variables in header values
+          const processedValue = replaceEnvVariables(value, envVariables);
+          return { ...acc, [key]: processedValue };
+        }, {});
 
       const queryParams = state.params.reduce((acc, { key, value }) => {
-        if (key.trim() !== "") acc[key] = value;
+        if (key.trim() !== "") {
+          // Replace environment variables in param values
+          const processedValue = replaceEnvVariables(value, envVariables);
+          acc[key] = processedValue;
+        }
         return acc;
       }, {});
 
@@ -83,20 +224,48 @@ const RequestPanel = ({ id, isExpanded, onToggle, topHeight, onResponse }) => {
         filteredHeaders["Authorization"] = `Bearer ${state.password}`;
       }
 
+      // Replace environment variables in URL
+      const processedUrl = replaceEnvVariables(state.url, envVariables);
+      
+      // Replace environment variables in the body if it's a POST/PUT request
+      let processedBody = state.body;
+      if (state.method !== "GET" && state.body) {
+        processedBody = replaceEnvVariables(state.body, envVariables);
+      }
+
       const config = {
         method: state.method,
-        url: state.url,
+        url: processedUrl,
         params: queryParams,
         headers: filteredHeaders,
-        data: state.method !== "GET" ? state.body : undefined,
+        data: state.method !== "GET" ? processedBody : undefined,
       };
-
+      console.log("Request headers:", filteredHeaders);
       const response = await axios(config);
       onResponse(response);
+     // Save request to collection if one is selected
+     if (selectedCollection && response) {
+      try {
+        await axios.post('http://localhost:5000/api/request', {
+          method: state.method,
+          url: state.url,
+          headers: filteredHeaders,
+          body: state.body,
+          params: queryParams,
+          collectionId: selectedCollection
+        }, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+      } catch (error) {
+        console.error("Error saving request to collection:", error);
+      }
+    }
       dispatch({ type: "SET_SUCCESS", payload: "Request sent successfully" });
       setTimeout(() => dispatch({ type: "CLEAR_SUCCESS" }), 3000);
-    } catch (error) {
-      onResponse(error);
+  } catch (error) {
+    onResponse(error);
       dispatch({ 
         type: "SET_ERROR", 
         payload: error.message || "An error occurred while sending the request"
@@ -117,8 +286,8 @@ const RequestPanel = ({ id, isExpanded, onToggle, topHeight, onResponse }) => {
   const scrollTabsRight = () => {
     if (tabsContainerRef.current) {
       tabsContainerRef.current.scrollBy({ left: 100, behavior: 'smooth' });
-    }
-  };
+  }
+};
 
   return (
     <motion.div
@@ -210,6 +379,7 @@ const RequestPanel = ({ id, isExpanded, onToggle, topHeight, onResponse }) => {
           )}
         </AnimatePresence>
 
+        
         {/* HTTP Method, URL, and Send Button - Responsive Layout */}
         <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 mb-4">
           <motion.select

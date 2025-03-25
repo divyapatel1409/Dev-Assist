@@ -48,6 +48,7 @@ const LoginForm = () => {
             token: response.data.token
           }
           console.log(user);
+          localStorage.setItem("token", user.token)
           setUser(user);
         } else {
           setErrors({ api: "Invalid credentials!" });

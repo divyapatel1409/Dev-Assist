@@ -1,5 +1,5 @@
 import Collection from "../models/collectionModel.js";
-// import ApiRequest from "../models/apiRequestModel.js";
+import ApiRequest from "../models/apiRequestModel.js";
 
 // Create a new collection
 export const createCollection = async (req, res) => {
@@ -33,13 +33,14 @@ export const getCollectionWithRequests = async (req, res) => {
     const collection = await Collection.findById(req.params.id);
     if (!collection) return res.status(404).json({ success: false, message: "Collection not found" });
 
-    // const requests = await ApiRequest.find({ collectionId: req.params.id });
+    const requests = await ApiRequest.find({ collectionId: req.params.id });
 
-    return res.status(200).json({ success: true, data: { collection } }); // , requests
+    return res.status(200).json({ success: true, data: { collection, requests } });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
   }
 };
+
 
 // Delete a collection and its requests
 export const deleteCollection = async (req, res) => {
