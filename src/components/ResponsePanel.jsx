@@ -17,18 +17,13 @@ const ResponsePanel = ({ response, bottomHeight, isExpanded, onToggle }) => {
     ? Object.entries(response.cookies).map(([key, value]) => ({ key, value }))
     : [];
 
-  const testResultArray = response?.testResults
-    ? Object.entries(response.testResults).map(([key, value]) => ({ key, value }))
-    : [];
-
-  const safeResponse = response || { headers: [], cookies: [], testResults: [], notes: "" };
+  const safeResponse = response || { headers: [], cookies: [], notes: "" };
 
   // Tab sections configuration
   const tabSections = [
     { id: "body", label: "Body", icon: "M4 6h16M4 12h16M4 18h7" },
     { id: "headers", label: "Headers", icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" },
     { id: "cookies", label: "Cookies", icon: "M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" },
-    { id: "testResults", label: "Tests", icon: "M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" },
     { id: "notes", label: "Notes", icon: "M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" },
   ];
 
@@ -39,18 +34,6 @@ const ResponsePanel = ({ response, bottomHeight, isExpanded, onToggle }) => {
     const a = document.createElement("a");
     a.href = url;
     a.download = "safeResponse.json";
-    a.click();
-    URL.revokeObjectURL(url);
-    setIsMenuOpen(false);
-  };
-
-  // Function to save tests to file
-  const saveTestsToFile = () => {
-    const blob = new Blob([JSON.stringify(safeResponse.testResults, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "tests.json";
     a.click();
     URL.revokeObjectURL(url);
     setIsMenuOpen(false);
@@ -154,13 +137,6 @@ const ResponsePanel = ({ response, bottomHeight, isExpanded, onToggle }) => {
                     whileHover={{ backgroundColor: "#f3f4f6" }}
                   >
                     Save Response to File
-                  </motion.button>
-                  <motion.button
-                    onClick={saveTestsToFile}
-                    className="block w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 text-left"
-                    whileHover={{ backgroundColor: "#f3f4f6" }}
-                  >
-                    Save Tests to File
                   </motion.button>
                 </motion.div>
               )}
@@ -309,50 +285,6 @@ const ResponsePanel = ({ response, bottomHeight, isExpanded, onToggle }) => {
                     ) : (
                       <tr>
                         <td colSpan="5" className="px-4 py-2 border border-gray-300 text-center text-gray-500">No cookies available</td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </motion.div>
-            )}
-
-            {/* Test Results Section */}
-            {activeTab === "testResults" && (
-              <motion.div
-                key="testResults"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="w-full overflow-x-auto"
-              >
-                <table className="w-full border-collapse">
-                  <thead>
-                    <tr>
-                      <th className="px-4 py-2 border border-gray-300 text-left">Test Name</th>
-                      <th className="px-4 py-2 border border-gray-300 text-left">Status</th>
-                      <th className="px-4 py-2 border border-gray-300 text-left">Message</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {testResultArray.length > 0 ? (
-                      testResultArray.map((test, index) => (
-                        <tr key={index}>
-                          <td className="px-4 py-2 border border-gray-300">{test.name}</td>
-                          <td className="px-4 py-2 border border-gray-300">
-                            <span
-                              className={`px-2 py-1 rounded-full text-sm ${
-                                test.status === "Pass" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-                              }`}
-                            >
-                              {test.status}
-                            </span>
-                          </td>
-                          <td className="px-4 py-2 border border-gray-300">{test.message}</td>
-                        </tr>
-                      ))
-                    ) : (
-                      <tr>
-                        <td colSpan="3" className="px-4 py-2 border border-gray-300 text-center text-gray-500">No test results available</td>
                       </tr>
                     )}
                   </tbody>
