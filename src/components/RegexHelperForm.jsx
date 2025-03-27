@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import RegexCommunityHelper from "./RegexCommunityHelper";
-import appConfig from './../appConfig'
+import api from './../appConfig.js'
+
 
 export default function RegexHelperForm() {
   const [regex, setRegex] = useState("");
@@ -8,34 +9,15 @@ export default function RegexHelperForm() {
   const [matches, setMatches] = useState([]);
   const [error, setError] = useState("");
   const [flags, setFlags] = useState("g");
-  const [copyStatus, setCopyStatus] = useState(""); // State for feedback
-  const [isModalOpen, setIsModalOpen] = useState(false); // Controls modal visibility
-  const [regexName, setRegexName] = useState(""); // State for regex name
-  const [regexDescription, setRegexDescription] = useState(""); // State for regex description
-  const [communityRegex, setCommunityRegex] = useState([]); // Community regex data
-  const [refreshCommunity, setRefreshCommunity] = useState(false); // Used to trigger reloading community data
+  const [copyStatus, setCopyStatus] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [regexName, setRegexName] = useState("");
+  const [regexDescription, setRegexDescription] = useState("");
+  const [refreshCommunity, setRefreshCommunity] = useState(false);
 
-	console.log(import.meta.env.VITE_API_BASE_URL)
-
-  // Auto-test on change
   useEffect(() => {
     if (regex && testString) handleTest();
   }, [regex, testString, flags]);
-
-  useEffect(() => {
-    // Fetch community regex data from API
-    const fetchCommunityRegex = async () => {
-      try {
-        const response = await fetch(`${appConfig.API_BASE_URL}/api/regex`);
-        const data = await response.json();
-        setCommunityRegex(data);
-      } catch (err) {
-        console.error("Error fetching community regex", err);
-      }
-    };
-
-    fetchCommunityRegex();
-  }, [refreshCommunity]);
 
   const handleTest = () => {
     try {
@@ -51,30 +33,29 @@ export default function RegexHelperForm() {
 
   const copyRegex = () => {
     navigator.clipboard.writeText(regex);
-    setCopyStatus("Copied!"); // Show feedback
-    setTimeout(() => setCopyStatus(""), 2000); // Reset after 2 seconds
+    setCopyStatus("Copied!");
+    setTimeout(() => setCopyStatus(""), 2000);
   };
 
   const handleShare = async () => {
-    // Create a new regex entry
+    // Build the new regex entry to send to the API
     const newRegex = {
-      pattern: regex,
       name: regexName,
+      pattern: regex,
       description: regexDescription,
-      owner: "community",
     };
 
     try {
-      // Post regex to API
-      const response = await fetch(`${API_BASE_URL}/regex`, {
+      const response = await fetch( api.API_BASE_URL + "/api/regex", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(newRegex),
       });
+      const data = await response.json();
 
-      if (response.ok) {
+      if (response.ok && data.success) {
         alert("Regex shared successfully!");
         // Close the modal and reset share form data
         setIsModalOpen(false);
@@ -83,11 +64,10 @@ export default function RegexHelperForm() {
         // Trigger a refresh in the community helper
         setRefreshCommunity(!refreshCommunity);
       } else {
-        alert("Failed to share regex.");
+        alert("Failed to share regex: " + data.message);
       }
-    } catch (err) {
-      console.error("Error sharing regex", err);
-      alert("An error occurred while sharing the regex.");
+    } catch (error) {
+      alert("Error sharing regex: " + error.message);
     }
   };
 
@@ -180,7 +160,7 @@ export default function RegexHelperForm() {
             </button>
 
             <button
-              onClick={() => setIsModalOpen(true)} // Open modal when clicked
+              onClick={() => setIsModalOpen(true)}
               className="px-4 py-2 bg-blue-500 text-white rounded"
             >
               Share With Community
@@ -238,7 +218,6 @@ export default function RegexHelperForm() {
             )}
           </div>
         </div>
-        <RegexCommunityHelper setRegex={setRegex} refresh={refreshCommunity} />
       </div>
 
       {/* Modal for sharing */}
@@ -248,7 +227,9 @@ export default function RegexHelperForm() {
           className="fixed inset-0 flex justify-center items-center bg-black"
         >
           <div className="bg-white p-6 rounded shadow-lg w-1/3">
-            <h2 className="text-xl font-bold mb-4">Share Regex with Community</h2>
+            <h2 className="text-xl font-bold mb-4">
+              Share Regex with Community
+            </h2>
 
             <div className="mb-4">
               <label className="block font-semibold">Regex Name:</label>
@@ -273,13 +254,13 @@ export default function RegexHelperForm() {
 
             <div className="flex gap-4">
               <button
-                onClick={() => setIsModalOpen(false)} // Close the modal
+                onClick={() => setIsModalOpen(false)}
                 className="px-4 py-2 bg-gray-400 text-white rounded"
               >
                 Cancel
               </button>
               <button
-                onClick={handleShare} // Save regex to API
+                onClick={handleShare}
                 className="px-4 py-2 bg-blue-500 text-white rounded"
               >
                 Share
@@ -288,6 +269,9 @@ export default function RegexHelperForm() {
           </div>
         </div>
       )}
+
+      {/* Pass refreshCommunity as a prop so the helper can reload the data */}
+      <RegexCommunityHelper setRegex={setRegex} refresh={refreshCommunity} />
     </>
   );
 }
