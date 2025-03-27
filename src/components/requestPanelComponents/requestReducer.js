@@ -16,7 +16,7 @@ export const initialState = {
   username: "",
   password: "",
   showPassword: false,
-  setVarRows: [{ parameter: "", value: "", variableName: "" }],
+  // setVarRows: [{ parameter: "", value: "", variableName: "" }],
   activeSection: "params",
   error: null,  // Added for error handling
   success: null // Added for success messages
@@ -46,8 +46,8 @@ export const requestReducer = (state, action) => {
       return { ...state, testParam: action.payload };
     case "SET_TEST_VALUE":
       return { ...state, testValue: action.payload };
-    case "SET_SET_VAR_ROWS":
-      return { ...state, setVarRows: action.payload };
+    // case "SET_SET_VAR_ROWS":
+    //   return { ...state, setVarRows: action.payload };
     case "SET_ACTIVE_SECTION":
       return { ...state, activeSection: action.payload };
     case "SET_ERROR":
