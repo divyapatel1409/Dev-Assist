@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import RegexCommunityHelper from "./RegexCommunityHelper";
+import appConfig from './../appConfig'
 
 export default function RegexHelperForm() {
   const [regex, setRegex] = useState("");
@@ -11,12 +12,30 @@ export default function RegexHelperForm() {
   const [isModalOpen, setIsModalOpen] = useState(false); // Controls modal visibility
   const [regexName, setRegexName] = useState(""); // State for regex name
   const [regexDescription, setRegexDescription] = useState(""); // State for regex description
+  const [communityRegex, setCommunityRegex] = useState([]); // Community regex data
   const [refreshCommunity, setRefreshCommunity] = useState(false); // Used to trigger reloading community data
+
+	console.log(import.meta.env.VITE_API_BASE_URL)
 
   // Auto-test on change
   useEffect(() => {
     if (regex && testString) handleTest();
   }, [regex, testString, flags]);
+
+  useEffect(() => {
+    // Fetch community regex data from API
+    const fetchCommunityRegex = async () => {
+      try {
+        const response = await fetch(`${appConfig.API_BASE_URL}/api/regex`);
+        const data = await response.json();
+        setCommunityRegex(data);
+      } catch (err) {
+        console.error("Error fetching community regex", err);
+      }
+    };
+
+    fetchCommunityRegex();
+  }, [refreshCommunity]);
 
   const handleTest = () => {
     try {
@@ -36,30 +55,40 @@ export default function RegexHelperForm() {
     setTimeout(() => setCopyStatus(""), 2000); // Reset after 2 seconds
   };
 
-  const handleShare = () => {
-    // Retrieve current community regex from localStorage or initialize empty array
-    const storedCommunityRegex = JSON.parse(localStorage.getItem("communityRegex")) || [];
-
-    // Create a new regex entry with a unique id (using Date.now())
+  const handleShare = async () => {
+    // Create a new regex entry
     const newRegex = {
-      id: Date.now(),
       pattern: regex,
       name: regexName,
       description: regexDescription,
-      owner: "community"
+      owner: "community",
     };
 
-    // Add new entry to stored data and save back to localStorage
-    storedCommunityRegex.push(newRegex);
-    localStorage.setItem("communityRegex", JSON.stringify(storedCommunityRegex));
+    try {
+      // Post regex to API
+      const response = await fetch(`${API_BASE_URL}/regex`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newRegex),
+      });
 
-    alert("Regex shared successfully!");
-    // Close the modal and reset share form data
-    setIsModalOpen(false);
-    setRegexName("");
-    setRegexDescription("");
-    // Trigger a refresh in the community helper
-    setRefreshCommunity(!refreshCommunity);
+      if (response.ok) {
+        alert("Regex shared successfully!");
+        // Close the modal and reset share form data
+        setIsModalOpen(false);
+        setRegexName("");
+        setRegexDescription("");
+        // Trigger a refresh in the community helper
+        setRefreshCommunity(!refreshCommunity);
+      } else {
+        alert("Failed to share regex.");
+      }
+    } catch (err) {
+      console.error("Error sharing regex", err);
+      alert("An error occurred while sharing the regex.");
+    }
   };
 
   return (
@@ -209,6 +238,7 @@ export default function RegexHelperForm() {
             )}
           </div>
         </div>
+        <RegexCommunityHelper setRegex={setRegex} refresh={refreshCommunity} />
       </div>
 
       {/* Modal for sharing */}
@@ -218,9 +248,7 @@ export default function RegexHelperForm() {
           className="fixed inset-0 flex justify-center items-center bg-black"
         >
           <div className="bg-white p-6 rounded shadow-lg w-1/3">
-            <h2 className="text-xl font-bold mb-4">
-              Share Regex with Community
-            </h2>
+            <h2 className="text-xl font-bold mb-4">Share Regex with Community</h2>
 
             <div className="mb-4">
               <label className="block font-semibold">Regex Name:</label>
@@ -251,7 +279,7 @@ export default function RegexHelperForm() {
                 Cancel
               </button>
               <button
-                onClick={handleShare} // Save regex to localStorage
+                onClick={handleShare} // Save regex to API
                 className="px-4 py-2 bg-blue-500 text-white rounded"
               >
                 Share
@@ -260,9 +288,6 @@ export default function RegexHelperForm() {
           </div>
         </div>
       )}
-
-      {/* Pass refreshCommunity as a prop so the helper can reload the data */}
-      <RegexCommunityHelper setRegex={setRegex} refresh={refreshCommunity} />
     </>
   );
 }

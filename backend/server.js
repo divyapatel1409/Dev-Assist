@@ -7,6 +7,7 @@ import db from './util/db.js'
 import { verifyToken } from './middlewares/authMiddleware.js';
 import apiRequestRoute from './routes/apiRequestRoutes.js';
 import cors from 'cors';
+import regexRoutes from "./routes/regexRoute.js";
 
 
 const app = express();
@@ -34,6 +35,7 @@ app.get('/private', verifyToken, (req, res)=>{
 
 // Auth Routes
 app.use('/api', authRoute);
+app.use("/api", regexRoutes);
 app.use('/api', verifyToken, envRoute);
 app.use('/api', verifyToken, collectionRoute);
 app.use('/api', verifyToken, apiRequestRoute);
