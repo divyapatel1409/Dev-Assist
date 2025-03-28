@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import RegexCommunityHelper from "./RegexCommunityHelper";
-import api from './../appConfig.js'
-
+import api from "./../appConfig.js";
+import { GiArtificialIntelligence } from "react-icons/gi";
+import { BsRegex } from "react-icons/bs";
+import RegexGenerator from "./RegexGenerator.jsx";
 
 export default function RegexHelperForm() {
   const [regex, setRegex] = useState("");
@@ -46,7 +48,7 @@ export default function RegexHelperForm() {
     };
 
     try {
-      const response = await fetch( api.API_BASE_URL + "/api/regex", {
+      const response = await fetch(api.API_BASE_URL + "/api/regex", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -76,6 +78,14 @@ export default function RegexHelperForm() {
       <div className="flex">
         <div className="max-w-3xl mx-auto mt-10 p-6 border rounded shadow-lg bg-gray-100">
           <h1 className="text-2xl font-bold mb-4">🔍 Regex Helper</h1>
+          {/* Ai regex generator */}
+          <RegexGenerator setRegex={setRegex} />
+
+          <div className="flex items-center w-full my-2.5">
+            <div className="flex-grow border-t border-gray-200"></div>
+            <span className="mx-4 text-2xl font-extralight text-gray-400">OR</span>
+            <div className="flex-grow border-t border-gray-200"></div>
+          </div>
 
           {/* Regex Input with Copy Button */}
           <div className="mb-4 flex items-center">
