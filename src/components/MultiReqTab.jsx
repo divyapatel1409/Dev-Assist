@@ -17,6 +17,7 @@ const MultiReqTab = ({
     }
   }, []); // Empty dependency array ensures this runs only once on mount
 
+	console.log(JSON.stringify(requests))
   // Function to close a request tab
   const closeRequest = (id) => {
     const newRequests = requests.filter(request => request.id !== id);

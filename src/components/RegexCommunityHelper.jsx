@@ -1,37 +1,33 @@
 import { useState, useEffect } from "react";
-import { FaPlay } from "react-icons/fa"; // Import a play icon for the use button
 import { VscRegex } from "react-icons/vsc";
-import axios from "axios"; // Import axios for API calls
-import appConfig from './../appConfig.js'
-
+import api from './../appConfig.js'
 export default function RegexCommunityHelper({ setRegex, refresh }) {
   const [search, setSearch] = useState("");
   const [regexData, setRegexData] = useState([]);
 
-	const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
-	console.log('Env value' , apiBaseUrl)
-  // Load community regex data from the backend whenever the component mounts or refresh changes
+  // Fetch regex patterns from the API whenever the component mounts or when refresh changes
   useEffect(() => {
     const fetchRegexData = async () => {
       try {
-        // Fetch community regex patterns from the API
-        const response = await axios.get(`${appConfig.API_BASE_URL}/api/regex`);
-        if (response.data.success) {
-          setRegexData(response.data.data); // Store the fetched regex data
+        const response = await fetch( api.API_BASE_URL + "/api/regex");
+        const data = await response.json();
+        if (response.ok && data.success) {
+          setRegexData(data.data);
         } else {
-          console.error("Failed to load community regex data");
+          console.error("Failed to fetch regex data:", data.message);
         }
       } catch (error) {
-        console.error("Error fetching regex data from the backend:", error);
+        console.error("Error fetching regex data:", error);
       }
     };
 
     fetchRegexData();
-  }, [refresh]); // Trigger fetching when the 'refresh' prop changes
+  }, [refresh]);
 
   // Filter regex patterns based on search input
   const filteredRegex = regexData.filter((regex) =>
-    regex.pattern.includes(search) || regex.name.toLowerCase().includes(search.toLowerCase())
+    regex.pattern.includes(search) ||
+    regex.name.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -51,14 +47,17 @@ export default function RegexCommunityHelper({ setRegex, refresh }) {
       <div className="space-y-4">
         {filteredRegex.length > 0 ? (
           filteredRegex.map((regex) => (
-            <div key={regex.name} className="p-4 bg-white rounded-lg shadow flex items-center justify-between hover:shadow-md transition">
+            <div
+              key={regex._id || regex.id}
+              className="p-4 bg-white rounded-lg shadow flex items-center justify-between hover:shadow-md transition"
+            >
               <div>
                 <p className="text-lg font-semibold">{regex.name}</p>
                 <p className="text-md font-mono text-blue-600">{regex.pattern}</p>
                 <p className="text-sm text-gray-600">{regex.description}</p>
               </div>
               <button
-                onClick={() => setRegex(regex.pattern)} 
+                onClick={() => setRegex(regex.pattern)}
                 className="p-2 bg-blue-500 text-white rounded-full hover:bg-blue-700 transition"
                 title="Use this regex"
               >

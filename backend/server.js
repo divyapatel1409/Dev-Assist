@@ -35,7 +35,9 @@ app.get('/private', verifyToken, (req, res)=>{
 
 // Auth Routes
 app.use('/api', authRoute);
+app.use('/api',  apiRequestRoute);
+
 app.use("/api", regexRoutes);
 app.use('/api', verifyToken, envRoute);
 app.use('/api', verifyToken, collectionRoute);
-app.use('/api', verifyToken, apiRequestRoute);
+// app.use('/api', verifyToken, apiRequestRoute);
