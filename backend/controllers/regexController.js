@@ -1,5 +1,7 @@
 import Regex from "../models/regexModel.js";
 import { HfInference  , InferenceClient } from "@huggingface/inference";
+import { jsonrepair } from 'jsonrepair';
+
 const HF_TOKEN = process.env.HF_API_KEY;
 // const inference = new InferenceClient(HF_TOKEN);
 const client = new HfInference(HF_TOKEN);
@@ -85,20 +87,20 @@ export const generateRegex = async (req, res) => {
     const { prompt } = req.body;
     if (!prompt) return res.status(400).json({ error: "Prompt is required." });
 
-    // Create the improved prompt to enforce rules
-    const aiPrompt = `Generate a regular expression for the following task: ${prompt}. Return **only** the regular expression in this exact JSON format: { "regex": "<regex-pattern>" }. Do not include any additional text, explanations, or conversation. Only return the regex pattern in the specified format.`;
+	 // Create the improved prompt to enforce rules
+	 const aiPrompt = `Generate a regular expression for the following task: ${prompt}. Please return only the regex pattern in the following format: { "regex": "<your_regex_here>", "test": "<example_test_string>" }. Do not include any additional information or explanations.`;
 
-    // Prepare the system message to enforce behavior rules
-    const systemMessage = {
-      role: "system",
-      content: "You are an assistant that generates regular expressions. Return **only** the regular expression in the following JSON format: { \"regex\": \"<regex-pattern>\" }. Do not include any explanations, descriptions, or extra text. Only return the regex pattern."
-    };
+
+    // // Prepare the system message to enforce behavior rules
+    // const systemMessage = {
+    //   role: "system",
+    //   content: "You are an assistant that generates regular expressions. Return **only** the regular expression in the following JSON format: { \"regex\": \"<regex-pattern>\" }. Do not include any explanations, descriptions, or extra text. Only return the regex pattern."
+    // };
 
     // Call the Hugging Face API to generate the regex pattern
     const response = await client.chatCompletion({
       model: "beowolx/CodeNinja-1.0-OpenChat-7B", // Choose a suitable model for your task
       messages: [
-        systemMessage, // Enforcing the behavior with the system message
         { role: "user", content: aiPrompt } // User's request for the regex
       ],
       provider: "novita",  // Set provider to Hugging Face
@@ -109,9 +111,35 @@ export const generateRegex = async (req, res) => {
 
     // Extract the regex pattern from the response
     let regexOutput = response.choices[0]?.message?.content || "{}";
+		// console.log(regexOutput)
+		// console.log(typeof regexOutput)
+		// regexOutput = JSON.parse(regexOutput); 
+
+		let parsedOutput;
+		console.log(regexOutput)
+		try {
+			// Attempt to parse the output as valid JSON
+			parsedOutput = JSON.parse(regexOutput);
+		} catch (initialParseError) {
+			console.warn("Initial JSON parsing failed. Attempting repair...");
+			try {
+				// Repair the JSON string and parse again
+				const repairedJson = jsonrepair(regexOutput);
+				console.log("Repaired JSON:", repairedJson);
+				parsedOutput = JSON.parse(repairedJson);
+			} catch (repairError) {
+				console.error("Failed to repair or parse JSON:", repairError);
+				return res.status(500).json({ error: "Failed to process regex output." });
+			}
+		}
+		
+		console.log("Parsed Output:", parsedOutput);
+		return res.send(parsedOutput);
+		console.log(regexOutput) 
+		console.log(regexOutput , 'Parsed : ' , JSON.parse(regexOutput) )
 
     // Try parsing the regexOutput to validate JSON structure
-    let parsedOutput;
+    // let parsedOutput;
     try {
       parsedOutput = JSON.parse(regexOutput);
     } catch (parseError) {
