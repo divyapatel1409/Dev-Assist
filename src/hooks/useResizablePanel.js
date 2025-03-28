@@ -7,12 +7,14 @@ const useResizablePanel = () => {
 
     const bottomHeight = window.innerHeight - topHeight - 1; 
 
-    const handleMouseDown = () => {
+    const handleMouseDown = (e) => {
+        e.preventDefault(); // Prevent default drag behavior
         setIsResizing(true);
     };
 
     const handleMouseMove = (e) => {
         if (!isResizing) return;
+        e.preventDefault(); // Prevent text selection while dragging
         let newHeight = e.clientY;
         if (newHeight < 100) newHeight = 100;
         if (newHeight > window.innerHeight - 100) newHeight = window.innerHeight - 100;
@@ -25,16 +27,22 @@ const useResizablePanel = () => {
 
     useEffect(() => {
         if (isResizing) {
-            document.addEventListener("mousemove", handleMouseMove);
-            document.addEventListener("mouseup", handleMouseUp);
+            window.addEventListener("mousemove", handleMouseMove);
+            window.addEventListener("mouseup", handleMouseUp);
+            window.addEventListener("mouseleave", handleMouseUp);
+            window.addEventListener("blur", handleMouseUp);
         } else {
-            document.removeEventListener("mousemove", handleMouseMove);
-            document.removeEventListener("mouseup", handleMouseUp);
+            window.removeEventListener("mousemove", handleMouseMove);
+            window.removeEventListener("mouseup", handleMouseUp);
+            window.removeEventListener("mouseleave", handleMouseUp);
+            window.removeEventListener("blur", handleMouseUp);
         }
 
         return () => {
-            document.removeEventListener("mousemove", handleMouseMove);
-            document.removeEventListener("mouseup", handleMouseUp);
+            window.removeEventListener("mousemove", handleMouseMove);
+            window.removeEventListener("mouseup", handleMouseUp);
+            window.removeEventListener("mouseleave", handleMouseUp);
+            window.removeEventListener("blur", handleMouseUp);
         };
     }, [isResizing]);
 
