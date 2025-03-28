@@ -79,7 +79,7 @@ export default function RegexHelperForm() {
         <div className="max-w-3xl mx-auto mt-10 p-6 border rounded shadow-lg bg-gray-100">
           <h1 className="text-2xl font-bold mb-4">🔍 Regex Helper</h1>
           {/* Ai regex generator */}
-          <RegexGenerator setRegex={setRegex} />
+          <RegexGenerator setRegex={setRegex} setTestString={setTestString} />
 
           <div className="flex items-center w-full my-2.5">
             <div className="flex-grow border-t border-gray-200"></div>

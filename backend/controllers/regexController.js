@@ -104,7 +104,7 @@ export const generateRegex = async (req, res) => {
         { role: "user", content: aiPrompt } // User's request for the regex
       ],
       provider: "novita",  // Set provider to Hugging Face
-      max_tokens: 100,     // Limit response length
+      max_tokens: 256,     // Limit response length
       top_p: 0.7,          // Use nucleus sampling
       temperature: 0.5     // Ensure deterministic output
     });

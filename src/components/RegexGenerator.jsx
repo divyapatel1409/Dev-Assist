@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { BsRegex } from "react-icons/bs";
 
-const RegexGenerator = ({ setRegex }) => {
+const RegexGenerator = ({ setRegex, setTestString }) => {
   const [prompt, setPrompt] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -23,8 +23,10 @@ const RegexGenerator = ({ setRegex }) => {
       }
 
       // Parse the JSON response
+      // console.log('Response' , response);
       const data = await response.json();
-      console.log(data);
+      // console.log('Data' ,data);
+			// setRegex(data.regex);
 
       if (data && data.regex && typeof data.regex === 'string') {
         // Optionally validate the regex on the client side as well
@@ -32,6 +34,7 @@ const RegexGenerator = ({ setRegex }) => {
           new RegExp(data.regex);
           // Set regex directly since it's already valid
           setRegex(data.regex);
+          setTestString(data.test);
         } catch (regexError) {
           throw new Error("Invalid regex pattern: " + regexError.message);
         }
