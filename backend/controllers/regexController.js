@@ -134,33 +134,33 @@ export const generateRegex = async (req, res) => {
 		}
 		
 		console.log("Parsed Output:", parsedOutput);
-		return res.send(parsedOutput);
-		console.log(regexOutput) 
-		console.log(regexOutput , 'Parsed : ' , JSON.parse(regexOutput) )
+		return res.json(parsedOutput);
+		// console.log(regexOutput) 
+		// console.log(regexOutput , 'Parsed : ' , JSON.parse(regexOutput) )
 
-    // Try parsing the regexOutput to validate JSON structure
-    // let parsedOutput;
-    try {
-      parsedOutput = JSON.parse(regexOutput);
-    } catch (parseError) {
-      console.error("Error parsing regex output:", parseError);
-      return res.status(400).json({ error: "Invalid JSON format returned by AI", raw: regexOutput });
-    }
+    // // Try parsing the regexOutput to validate JSON structure
+    // // let parsedOutput;
+    // try {
+    //   parsedOutput = JSON.parse(regexOutput);
+    // } catch (parseError) {
+    //   console.error("Error parsing regex output:", parseError);
+    //   return res.status(400).json({ error: "Invalid JSON format returned by AI", raw: regexOutput });
+    // }
 
-    // Validate the regex pattern
-    if (parsedOutput.regex && typeof parsedOutput.regex === "string") {
-      try {
-        new RegExp(parsedOutput.regex); // Validate regex syntax
-      } catch (regexError) {
-        console.error("Invalid regex pattern:", regexError);
-        return res.status(400).json({ error: "Invalid regex pattern returned", details: regexError.message });
-      }
-    } else {
-      return res.status(400).json({ error: "Regex pattern not found in the response." });
-    }
+    // // Validate the regex pattern
+    // if (parsedOutput.regex && typeof parsedOutput.regex === "string") {
+    //   try {
+    //     new RegExp(parsedOutput.regex); // Validate regex syntax
+    //   } catch (regexError) {
+    //     console.error("Invalid regex pattern:", regexError);
+    //     return res.status(400).json({ error: "Invalid regex pattern returned", details: regexError.message });
+    //   }
+    // } else {
+    //   return res.status(400).json({ error: "Regex pattern not found in the response." });
+    // }
     
-    // Send the parsed and validated output as JSON response
-    res.json(parsedOutput);
+    // // Send the parsed and validated output as JSON response
+    // res.json(parsedOutput);
   } catch (error) {
     console.error("Error:", error.message);
     res.status(500).json({ error: error.message });
