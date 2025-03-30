@@ -1,55 +1,92 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import PayPalDonation from './PayPalDonation';
+import { FiPlus, FiSearch, FiX, FiClock, FiFolder, FiCode, FiHeart } from "react-icons/fi";
 
-// Reusable ToggleButton Component
-const ToggleButton = ({ option, selectedOption, handleOptionSelect }) => (
-  <motion.button
-    className={`flex-1 py-1 sm:py-2 flex items-center justify-center text-xs sm:text-sm font-semibold rounded-lg transition-all duration-300 ease-in-out ${
-      selectedOption === option
-        ? "bg-blue-600 text-white shadow-md"
-        : "bg-gray-200 hover:bg-gray-300 text-gray-700"
-    }`}
-    onClick={() => handleOptionSelect(option)}
-    whileHover={{ y: -1 }}
-    whileTap={{ scale: 0.95 }}
-  >
-    <span>{option}</span>
-  </motion.button>
-);
+// PayPalDonation Component
+const PayPalDonation = ({ isVisible, onClose }) => {
+  return (
+    <AnimatePresence>
+      {isVisible && (
+        <motion.div 
+          className="bg-gray-50/90 backdrop-blur-sm rounded-lg p-4 border border-gray-200 mx-4 mb-4"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 20 }}
+          transition={{ type: "spring", stiffness: 300, damping: 20 }}
+        >
+          <div className="flex justify-between items-center mb-3">
+            <div className="flex items-center gap-2">
+              <FiHeart className="text-rose-500" size={16} />
+              <h4 className="text-sm font-medium text-gray-700">Support Development</h4>
+            </div>
+            <button 
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <FiX size={18} />
+            </button>
+          </div>
+          <p className="text-xs text-gray-500 mb-3">Help us improve this tool with your contribution</p>
+          <div className="w-full h-10 bg-white rounded flex items-center justify-center text-xs text-gray-400 border border-gray-200">
+            [PayPal Button Integration]
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+};
 
-// Reusable ListItem Component
+// ToggleButton Component
+const ToggleButton = ({ option, selectedOption, handleOptionSelect }) => {
+  const icons = {
+    History: <FiClock size={16} className="opacity-70" />,
+    Collection: <FiFolder size={16} className="opacity-70" />,
+    Variable: <FiCode size={16} className="opacity-70" />
+  };
+
+  return (
+    <motion.button
+      className={`flex-1 py-2.5 flex items-center justify-center gap-2 text-xs font-medium rounded-lg transition-all duration-200 ${
+        selectedOption === option
+          ? "bg-gray-100 text-gray-900"
+          : "text-gray-500 hover:bg-gray-50"
+      }`}
+      onClick={() => handleOptionSelect(option)}
+      whileHover={{ y: -1 }}
+      whileTap={{ scale: 0.98 }}
+    >
+      {icons[option]}
+      <span>{option}</span>
+    </motion.button>
+  );
+};
+
+// ListItem Component
 const ListItem = ({ item, selectedOption, getMethodColor }) => (
   <motion.div
-    className="p-2 sm:p-3 md:p-4 bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md hover:border-blue-300 transition-all duration-300 ease-in-out mb-2 sm:mb-3 cursor-pointer"
-    initial={{ opacity: 0, y: 10 }}
+    className="p-3 bg-white rounded-lg border border-gray-100 hover:border-gray-200 transition-all duration-150 mb-2 cursor-pointer group"
+    initial={{ opacity: 0, y: 5 }}
     animate={{ opacity: 1, y: 0 }}
     exit={{ opacity: 0, x: -10 }}
-    whileHover={{ scale: 1.01, translateX: 3 }}
+    whileHover={{ translateX: 1 }}
   >
     <div className="flex items-center justify-between">
-      <h3 className="font-semibold text-gray-800 text-xs sm:text-sm md:text-base truncate">
+      <h3 className="font-medium text-gray-800 text-sm truncate">
         {item.name}
       </h3>
       {selectedOption === "History" && (
         <span
-          className={`px-2 py-1 text-xs font-semibold rounded-full border flex items-center justify-center ${getMethodColor(
-            item.method
-          )}`}
+          className={`px-2 py-1 text-[10px] font-medium rounded ${getMethodColor(item.method)}`}
         >
           {item.method}
         </span>
       )}
     </div>
-    {selectedOption === "History" && (
-      <p className="text-xs md:text-sm text-gray-600 mt-1 md:mt-2 break-all">{item.url}</p>
-    )}
-    {selectedOption === "Collection" && (
-      <p className="text-xs md:text-sm text-gray-600 mt-1 md:mt-2">{item.description}</p>
-    )}
-    {selectedOption === "Variable" && (
-      <p className="text-xs md:text-sm text-gray-600 mt-1 md:mt-2">Value: {item.value}</p>
-    )}
+    <p className="text-xs text-gray-500 mt-1 truncate">
+      {selectedOption === "History" && item.url}
+      {selectedOption === "Collection" && item.description}
+      {selectedOption === "Variable" && `Value: ${item.value}`}
+    </p>
   </motion.div>
 );
 
@@ -57,266 +94,242 @@ const Sidebar = ({ onNewRequest, isSidebarVisible }) => {
   const [filterText, setFilterText] = useState("");
   const [selectedOption, setSelectedOption] = useState("");
   const [isMobile, setIsMobile] = useState(false);
+  const [showDonation, setShowDonation] = useState(false);
 
-  // Check if the screen is mobile or tablet
   useEffect(() => {
-    const checkScreenSize = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-
-    // Initial check
+    const checkScreenSize = () => setIsMobile(window.innerWidth < 768);
     checkScreenSize();
-
-    // Add event listener for window resize
     window.addEventListener("resize", checkScreenSize);
-
-    // Clean up the event listener on component unmount
     return () => window.removeEventListener("resize", checkScreenSize);
   }, []);
 
-  // Mock data for History, Collection, and Variable
   const mockData = {
     History: [
-      { id: 1, name: "Request 1", method: "GET", url: "https://api.example.com/data" },
-      { id: 2, name: "Request 2", method: "POST", url: "https://api.example.com/create" },
-      { id: 3, name: "Request 3", method: "PUT", url: "https://api.example.com/update" },
-      { id: 4, name: "Request 4", method: "DELETE", url: "https://api.example.com/delete" },
+      { id: 1, name: "Get User Data", method: "GET", url: "/api/v1/users/123" },
+      { id: 2, name: "Create Post", method: "POST", url: "/api/v1/posts" },
+      { id: 3, name: "Update Profile", method: "PUT", url: "/api/v1/profile" },
     ],
     Collection: [
-      { id: 1, name: "Collection 1", description: "A set of API requests" },
-      { id: 2, name: "Collection 2", description: "Another set of API requests" },
+      { id: 1, name: "User Endpoints", description: "Authentication and user management" },
+      { id: 2, name: "Content API", description: "Posts, comments and media handling" },
     ],
     Variable: [
-      { id: 1, name: "Variable 1", value: "123" },
-      { id: 2, name: "Variable 2", value: "456" },
+      { id: 1, name: "API_BASE_URL", value: "https://api.example.com/v1" },
+      { id: 2, name: "AUTH_TOKEN", value: "Bearer eyJhbGciOiJ..." },
     ],
-  };
-
-  const handleClear = () => {
-    setFilterText("");
   };
 
   const handleOptionSelect = (option) => {
-    if (selectedOption === option) {
-      setSelectedOption("");
-    } else {
-      setSelectedOption(option);
-    }
+    setSelectedOption(selectedOption === option ? "" : option);
     setFilterText("");
   };
 
-  // Filter data based on the selected option and filter text
   const filteredData = selectedOption
-    ? mockData[selectedOption].filter((item) =>
+    ? mockData[selectedOption].filter(item =>
         item.name.toLowerCase().includes(filterText.toLowerCase())
       )
     : [];
 
-  // Function to get the color for HTTP methods
   const getMethodColor = (method) => {
-    switch (method.toUpperCase()) {
-      case "GET":
-        return "bg-green-100 text-green-800 border-green-200";
-      case "POST":
-        return "bg-blue-100 text-blue-800 border-blue-200";
-      case "PUT":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200";
-      case "DELETE":
-        return "bg-red-100 text-red-800 border-red-200";
-      default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
-    }
+    const colors = {
+      GET: "bg-green-50 text-green-700",
+      POST: "bg-blue-50 text-blue-700",
+      PUT: "bg-amber-50 text-amber-700",
+      DELETE: "bg-rose-50 text-rose-700"
+    };
+    return colors[method.toUpperCase()] || "bg-gray-50 text-gray-700";
   };
 
   const sidebarVariants = {
-    open: {
-      width: isMobile ? "85%" : "320px",
-      transition: {
-        type: "spring",
-        stiffness: 300,
-        damping: 30
-      }
-    },
-    closed: {
-      width: "0px",
-      transition: {
-        type: "spring",
-        stiffness: 300,
-        damping: 30
-      }
-    }
+    open: { width: isMobile ? "280px" : "300px", transition: { type: "spring", damping: 25 } },
+    closed: { width: "0px", transition: { type: "spring", damping: 25 } }
   };
 
   return (
-    <AnimatePresence>
-      {isSidebarVisible && (
-        <motion.div
-          className="h-full bg-white shadow-lg border-r border-gray-200 flex flex-col overflow-hidden"
-          initial="closed"
-          animate="open"
-          exit="closed"
-          variants={sidebarVariants}
-        >
-          <div className="flex flex-col h-full overflow-hidden px-3 sm:px-4 md:px-6 py-4 sm:py-5 md:py-6">
-            {/* Logo with divider line */}
-            <motion.div 
-              className="flex flex-col items-center mb-4 md:mb-6"
-              initial={{ y: -10, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.1 }}
-            >
-              <img
-                src="images/DevAssist-Logo.png"
-                alt="Dev Assist Logo"
-                className="w-28 h-14 md:w-40 md:h-20 object-contain"
-              />
-              <div className="h-0.5 bg-gradient-to-r from-transparent via-blue-500 to-transparent w-full mt-3 md:mt-4" />
-            </motion.div>
+    <>
+      <AnimatePresence>
+        {isSidebarVisible && (
+          <motion.div
+            className="h-full bg-white/95 backdrop-blur-sm border-r border-gray-100 flex flex-col overflow-hidden"
+            initial="closed"
+            animate="open"
+            exit="closed"
+            variants={sidebarVariants}
+          >
+            <div className="flex flex-col h-full overflow-hidden">
+              {/* Header */}
+              <div className="p-5 pb-4 border-b border-gray-100">
+                <div className="flex justify-center mb-5">
+                  <img
+                    src="/images/DevAssist-Logo.png"
+                    alt="Logo"
+                    className="h-10 w-auto opacity-90"
+                  />
+                </div>
 
-            {/* New Request Button */}
-            <motion.button 
-              onClick={onNewRequest}
-              className="w-full py-2 md:py-3 bg-gradient-to-r from-blue-600 to-blue-500 text-white font-semibold rounded-lg shadow-md hover:from-blue-700 hover:to-blue-600 transition-all duration-300 ease-in-out mb-4 md:mb-5 flex items-center justify-center gap-2"
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              initial={{ y: -5, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.2 }}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 md:h-5 md:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              <span className="text-center">New Request</span>
-            </motion.button>
-
-            {/* Toggle Switch Buttons */}
-            <motion.div 
-              className="flex justify-between gap-1 sm:gap-2 md:gap-3 border-b border-gray-300 pb-3 md:pb-4 mb-3 md:mb-5"
-              initial={{ y: -5, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.3 }}
-            >
-              {["History", "Collection", "Variable"].map((option) => (
-                <ToggleButton
-                  key={option}
-                  option={option}
-                  selectedOption={selectedOption}
-                  handleOptionSelect={handleOptionSelect}
-                />
-              ))}
-            </motion.div>
-
-            {/* Enhanced Search Field */}
-            <motion.div 
-              className="flex items-center gap-1 sm:gap-2 md:gap-3 mb-3 md:mb-5"
-              initial={{ y: -5, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.4 }}
-            >
-              <div className="flex-1 relative">
-                <input
-                  type="text"
-                  placeholder={
-                    selectedOption ? `Filter ${selectedOption}` : "Select an option to filter"
-                  }
-                  className="w-full pl-8 pr-2 sm:pr-3 md:pr-4 py-2 md:py-3 text-xs sm:text-sm border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 ease-in-out"
-                  value={filterText}
-                  onChange={(e) => setFilterText(e.target.value)}
-                  disabled={!selectedOption}
-                />
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
+                <motion.button 
+                  onClick={onNewRequest}
+                  className="w-full py-2.5 bg-gray-900 text-white text-sm font-medium rounded-lg flex items-center justify-center gap-2 hover:bg-gray-800 transition-colors"
+                  whileHover={{ y: -1 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <FiPlus size={16} />
+                  <span>New Request</span>
+                </motion.button>
               </div>
-              <motion.button
-                className="h-full px-2 sm:px-3 md:px-4 py-2 md:py-3 bg-red-600 text-white text-xs sm:text-sm font-semibold rounded-lg shadow-md hover:bg-red-700 transition-all duration-300 ease-in-out flex items-center justify-center"
-                onClick={handleClear}
-                disabled={!selectedOption || filterText === ""}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                style={{ opacity: !selectedOption || filterText === "" ? 0.7 : 1 }}
-              >
-                <span>Clear</span>
-              </motion.button>
-            </motion.div>
 
-            {/* Filter results statistics */}
-            {selectedOption && (
-              <motion.div
-                className="text-xs text-gray-500 mb-2 px-1"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-              >
-                {filterText ? 
-                  `Found ${filteredData.length} of ${mockData[selectedOption].length} ${selectedOption.toLowerCase()}` : 
-                  `${mockData[selectedOption].length} ${selectedOption.toLowerCase()} available`
-                }
-              </motion.div>
-            )}
+              {/* Content */}
+              <div className="flex-1 flex flex-col overflow-hidden p-4 pt-3">
+                {/* Toggle Buttons */}
+                <div className="flex gap-1.5 mb-4 bg-gray-50 p-1 rounded-lg">
+                  {["History", "Collection", "Variable"].map((option) => (
+                    <ToggleButton
+                      key={option}
+                      option={option}
+                      selectedOption={selectedOption}
+                      handleOptionSelect={handleOptionSelect}
+                    />
+                  ))}
+                </div>
 
-            {/* Scrollable List of Cards */}
-            <motion.div 
-              className="overflow-y-auto flex-1 pr-1 sm:pr-2 md:pr-3 scrollbar-thin scrollbar-thumb-blue-200 scrollbar-track-blue-50"
-              initial={{ y: -5, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.5 }}
-            >
-              <AnimatePresence>
-                {selectedOption ? (
-                  filteredData.length > 0 ? (
-                    filteredData.map((item) => (
-                      <ListItem
-                        key={item.id}
-                        item={item}
-                        selectedOption={selectedOption}
-                        getMethodColor={getMethodColor}
-                      />
-                    ))
-                  ) : (
-                    <motion.div 
-                      className="flex flex-col items-center justify-center py-8 text-center"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
+                {/* Search */}
+                <div className="relative mb-4">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <FiSearch className="text-gray-400" size={14} />
+                  </div>
+                  <input
+                    type="text"
+                    placeholder={selectedOption ? `Filter ${selectedOption}` : "Select category"}
+                    className="w-full pl-9 pr-3 py-2 text-xs border border-gray-200 rounded-lg focus:ring-1 focus:ring-gray-300 focus:border-gray-300 transition-all"
+                    value={filterText}
+                    onChange={(e) => setFilterText(e.target.value)}
+                    disabled={!selectedOption}
+                  />
+                  {filterText && (
+                    <button
+                      onClick={() => setFilterText("")}
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-300 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <p className="text-gray-500 text-xs sm:text-sm md:text-base">
-                        No {selectedOption} {filterText ? "matches your filter" : "available"}
-                      </p>
-                      {filterText && (
-                        <button 
-                          className="mt-3 text-blue-500 text-xs hover:underline"
-                          onClick={handleClear}
+                      <FiX className="text-gray-400 hover:text-gray-600" size={14} />
+                    </button>
+                  )}
+                </div>
+
+                {/* Results */}
+                <div className="text-xs text-gray-400 mb-2 flex justify-between px-1">
+                  <span>
+                    {selectedOption 
+                      ? filterText 
+                        ? `${filteredData.length} items`
+                        : `${mockData[selectedOption].length} ${selectedOption.toLowerCase()}`
+                      : ""
+                    }
+                  </span>
+                  {selectedOption && (
+                    <span className="text-gray-400">{selectedOption}</span>
+                  )}
+                </div>
+
+                {/* List */}
+                <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
+                  <AnimatePresence>
+                    {selectedOption ? (
+                      filteredData.length > 0 ? (
+                        filteredData.map((item) => (
+                          <ListItem
+                            key={item.id}
+                            item={item}
+                            selectedOption={selectedOption}
+                            getMethodColor={getMethodColor}
+                          />
+                        ))
+                      ) : (
+                        <motion.div 
+                          className="flex flex-col items-center justify-center py-8 text-center"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
                         >
-                          Clear filter
-                        </button>
-                      )}
-                    </motion.div>
-                  )
-                ) : (
-                  <motion.div 
-                    className="flex flex-col items-center justify-center py-8 text-center"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-300 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    <p className="text-gray-500 text-xs sm:text-sm md:text-base">
-                      Please select an option above
-                    </p>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.div>
-          </div>
-          <div className="mt-auto">
-            <PayPalDonation />
-          </div>
-        </motion.div>
+                          <div className="bg-gray-100 p-3 rounded-full mb-3">
+                            <FiSearch className="text-gray-400" size={18} />
+                          </div>
+                          <p className="text-gray-500 text-sm">
+                            {filterText ? "No results found" : "No items available"}
+                          </p>
+                        </motion.div>
+                      )
+                    ) : (
+                      <motion.div 
+                        className="flex flex-col items-center justify-center py-8 text-center"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                      >
+                        <div className="bg-gray-100 p-3 rounded-full mb-3">
+                          <FiFolder className="text-gray-400" size={18} />
+                        </div>
+                        <p className="text-gray-500 text-sm">Select a category</p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </div>
+
+              {/* Donation Panel */}
+              <PayPalDonation 
+                isVisible={showDonation} 
+                onClose={() => setShowDonation(false)} 
+              />
+
+              {/* Donation Toggle */}
+              <div className="p-4 pt-2 border-t border-gray-100">
+                <button
+                  onClick={() => setShowDonation(!showDonation)}
+                  className={`w-full py-2 text-xs flex items-center justify-center gap-2 rounded-lg transition-colors ${
+                    showDonation 
+                      ? "text-rose-500 bg-rose-50 hover:bg-rose-100" 
+                      : "text-gray-500 hover:bg-gray-100"
+                  }`}
+                >
+                  <FiHeart size={14} />
+                  <span>Support Development</span>
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Floating Donation Button */}
+      {!isSidebarVisible && (
+        <motion.button
+          className="fixed bottom-6 right-6 w-12 h-12 rounded-full bg-gray-900 text-white flex items-center justify-center shadow-lg z-10"
+          onClick={() => setShowDonation(!showDonation)}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.9 }}
+        >
+          <FiHeart size={18} />
+        </motion.button>
       )}
-    </AnimatePresence>
+
+      {/* Floating Donation Panel */}
+      <AnimatePresence>
+        {!isSidebarVisible && showDonation && (
+          <motion.div
+            className="fixed bottom-20 right-6 w-72 bg-white rounded-lg shadow-xl border border-gray-100 overflow-hidden z-10"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+          >
+            <PayPalDonation 
+              isVisible={true} 
+              onClose={() => setShowDonation(false)} 
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 };
 
