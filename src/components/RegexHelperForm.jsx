@@ -73,11 +73,23 @@ export default function RegexHelperForm() {
     }
   };
 
+  const scrollToCommunity = () => {
+    document.getElementById('community-helper')?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   return (
     <>
       <div className="flex">
-        <div className="max-w-3xl mx-auto mt-10 p-6 border rounded shadow-lg bg-gray-100">
-          <h1 className="text-2xl font-bold mb-4">🔍 Regex Helper</h1>
+        <div id="regex-helper" className="max-w-3xl mx-auto mt-10 p-6 border rounded shadow-lg bg-gray-100">
+          <div className="flex justify-between items-center mb-4">
+            <h1 className="text-2xl font-bold">🔍 Regex Helper</h1>
+            <button 
+              onClick={scrollToCommunity}
+              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+            >
+              View Community Regex
+            </button>
+          </div>
           {/* Ai regex generator */}
           <RegexGenerator setRegex={setRegex} setTestString={setTestString} />
 
@@ -281,7 +293,7 @@ export default function RegexHelperForm() {
       )}
 
       {/* Pass refreshCommunity as a prop so the helper can reload the data */}
-      <RegexCommunityHelper setRegex={setRegex} refresh={refreshCommunity} />
+        <RegexCommunityHelper setRegex={setRegex} refresh={refreshCommunity} />
     </>
   );
 }
