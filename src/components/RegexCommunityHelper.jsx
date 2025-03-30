@@ -1,15 +1,20 @@
 import { useState, useEffect } from "react";
 import { VscRegex } from "react-icons/vsc";
-import api from './../appConfig.js'
+import api from "./../appConfig.js";
 export default function RegexCommunityHelper({ setRegex, refresh }) {
   const [search, setSearch] = useState("");
   const [regexData, setRegexData] = useState([]);
+
+  const setRegexAndScrollToHelper = (regexPattern) => {
+    setRegex(regexPattern);
+    document.getElementById("regex-helper")?.scrollIntoView({ behavior: "smooth" });
+  };
 
   // Fetch regex patterns from the API whenever the component mounts or when refresh changes
   useEffect(() => {
     const fetchRegexData = async () => {
       try {
-        const response = await fetch( api.API_BASE_URL + "/api/regex");
+        const response = await fetch(api.API_BASE_URL + "/api/regex");
         const data = await response.json();
         if (response.ok && data.success) {
           setRegexData(data.data);
@@ -26,12 +31,12 @@ export default function RegexCommunityHelper({ setRegex, refresh }) {
 
   // Filter regex patterns based on search input
   const filteredRegex = regexData.filter((regex) =>
-    regex.pattern.includes(search) ||
-    regex.name.toLowerCase().includes(search.toLowerCase())
+      regex.pattern.includes(search) ||
+      regex.name.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
-    <div className="max-w-3xl mx-auto mt-10 p-6 border rounded-lg shadow-lg bg-gray-100">
+    <div id="community-helper" className="max-w-3xl mx-auto mt-10 p-6 border rounded-lg shadow-lg bg-gray-100">
       <h2 className="text-xl font-bold mb-4">🔍 Regex Community Helper</h2>
 
       {/* Search Bar */}
@@ -57,7 +62,7 @@ export default function RegexCommunityHelper({ setRegex, refresh }) {
                 <p className="text-sm text-gray-600">{regex.description}</p>
               </div>
               <button
-                onClick={() => setRegex(regex.pattern)}
+                onClick={() => setRegexAndScrollToHelper(regex.pattern)}
                 className="p-2 bg-blue-500 text-white rounded-full hover:bg-blue-700 transition"
                 title="Use this regex"
               >
