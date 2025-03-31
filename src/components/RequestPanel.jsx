@@ -17,8 +17,19 @@ import {
   FiFileText, FiCode, FiEye, FiEyeOff 
 } from "react-icons/fi";
 
-const RequestPanel = ({ id, isExpanded, onToggle, topHeight, onResponse }) => {
-  const [state, dispatch] = useReducer(requestReducer, initialState);
+const RequestPanel = ({ id, request, isExpanded, onToggle, topHeight, onResponse }) => {
+  const [state, dispatch] = useReducer(requestReducer, {
+    ...initialState,
+    method: request.method || 'GET',
+    url: request.url || '',
+    params: request.params || [],
+    headers: request.headers || [],
+    body: request.body || '',
+    authType: request.authType || 'None',
+    username: request.username || '',
+    password: request.password || ''
+  });
+
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [collections, setCollections] = useState([]);
@@ -29,36 +40,36 @@ const RequestPanel = ({ id, isExpanded, onToggle, topHeight, onResponse }) => {
   const [newEnvironmentName, setNewEnvironmentName] = useState("");
   const [environmentVariables, setEnvironmentVariables] = useState([{ key: "", value: "" }]);
 
-  // Unified color scheme matching sidebar
+  // Updated color scheme to match sidebar
   const colorScheme = {
     GET: {
       bg: "bg-green-50",
       text: "text-green-700",
-      button: "bg-green-600 hover:bg-green-700",
+      button: "bg-gray-900 hover:bg-gray-800",
       border: "border-green-100"
     },
     POST: {
       bg: "bg-blue-50",
       text: "text-blue-700",
-      button: "bg-blue-600 hover:bg-blue-700",
+      button: "bg-gray-900 hover:bg-gray-800",
       border: "border-blue-100"
     },
     PUT: {
       bg: "bg-amber-50",
       text: "text-amber-700",
-      button: "bg-amber-600 hover:bg-amber-700",
+      button: "bg-gray-900 hover:bg-gray-800",
       border: "border-amber-100"
     },
     DELETE: {
       bg: "bg-rose-50",
       text: "text-rose-700",
-      button: "bg-rose-600 hover:bg-rose-700",
+      button: "bg-gray-900 hover:bg-gray-800",
       border: "border-rose-100"
     },
     DEFAULT: {
       bg: "bg-gray-50",
       text: "text-gray-700",
-      button: "bg-gray-600 hover:bg-gray-700",
+      button: "bg-gray-900 hover:bg-gray-800",
       border: "border-gray-100"
     }
   };
@@ -250,7 +261,7 @@ const RequestPanel = ({ id, isExpanded, onToggle, topHeight, onResponse }) => {
       <div className="flex justify-between items-center px-4 py-3 border-b border-gray-100">
         <div className="flex items-center gap-2">
           <motion.div
-            className="w-2 h-2 rounded-full bg-blue-500"
+            className="w-2 h-2 rounded-full bg-gray-900"
             animate={{ scale: [1, 1.2, 1], opacity: [1, 0.8, 1] }}
             transition={{ duration: 2, repeat: Infinity }}
           />
@@ -529,93 +540,99 @@ const RequestPanel = ({ id, isExpanded, onToggle, topHeight, onResponse }) => {
               />
             )}
 
-            {state.activeSection === "authorization" && (
-              <div className="space-y-4">
-                <div className="flex gap-4">
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      name="authType"
-                      checked={state.authType === "None"}
-                      onChange={() => dispatch({ type: "SET_AUTH_TYPE", payload: "None" })}
-                      className="h-3.5 w-3.5 text-blue-600 focus:ring-blue-500 border-gray-300"
-                    />
-                    <span className="text-xs text-gray-700">None</span>
-                  </label>
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      name="authType"
-                      checked={state.authType === "BasicAuth"}
-                      onChange={() => dispatch({ type: "SET_AUTH_TYPE", payload: "BasicAuth" })}
-                      className="h-3.5 w-3.5 text-blue-600 focus:ring-blue-500 border-gray-300"
-                    />
-                    <span className="text-xs text-gray-700">Basic Auth</span>
-                  </label>
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      name="authType"
-                      checked={state.authType === "BearerToken"}
-                      onChange={() => dispatch({ type: "SET_AUTH_TYPE", payload: "BearerToken" })}
-                      className="h-3.5 w-3.5 text-blue-600 focus:ring-blue-500 border-gray-300"
-                    />
-                    <span className="text-xs text-gray-700">Bearer Token</span>
-                  </label>
-                </div>
+{state.activeSection === "authorization" && (
+  <div className="space-y-3">
+    <div className="flex gap-4">
+      <label className="flex items-center space-x-2">
+        <input
+          type="radio"
+          name="authType"
+          checked={state.authType === "None"}
+          onChange={() => dispatch({ type: "SET_AUTH_TYPE", payload: "None" })}
+          className="h-3.5 w-3.5 text-gray-900 focus:ring-gray-500 border-gray-300"
+        />
+        <span className="text-xs text-gray-700">None</span>
+      </label>
+      <label className="flex items-center space-x-2">
+        <input
+          type="radio"
+          name="authType"
+          checked={state.authType === "BasicAuth"}
+          onChange={() => dispatch({ type: "SET_AUTH_TYPE", payload: "BasicAuth" })}
+          className="h-3.5 w-3.5 text-gray-900 focus:ring-gray-500 border-gray-300"
+        />
+        <span className="text-xs text-gray-700">Basic Auth</span>
+      </label>
+      <label className="flex items-center space-x-2">
+        <input
+          type="radio"
+          name="authType"
+          checked={state.authType === "BearerToken"}
+          onChange={() => dispatch({ type: "SET_AUTH_TYPE", payload: "BearerToken" })}
+          className="h-3.5 w-3.5 text-gray-900 focus:ring-gray-500 border-gray-300"
+        />
+        <span className="text-xs text-gray-700">Bearer Token</span>
+      </label>
+    </div>
 
-                {state.authType === "BasicAuth" && (
-                  <div className="space-y-3">
-                    <div>
-                      <label className="block text-xs text-gray-500 mb-1">Username</label>
-                      <input
-                        type="text"
-                        value={state.username}
-                        onChange={(e) => dispatch({ type: "SET_USERNAME", payload: e.target.value })}
-                        className="w-full px-3 py-2 text-xs border border-gray-200 rounded-lg focus:ring-1 focus:ring-gray-300"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs text-gray-500 mb-1">Password</label>
-                      <div className="relative">
-                        <input
-                          type={showPassword ? "text" : "password"}
-                          value={state.password}
-                          onChange={(e) => dispatch({ type: "SET_PASSWORD", payload: e.target.value })}
-                          className="w-full px-3 py-2 text-xs border border-gray-200 rounded-lg pr-8 focus:ring-1 focus:ring-gray-300"
-                        />
-                        <button
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                        >
-                          {showPassword ? <FiEyeOff size={14} /> : <FiEye size={14} />}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
+    {state.authType === "BasicAuth" && (
+      <div className="space-y-2">
+        <div className="flex items-center gap-2">
+          <motion.input
+            type="text"
+            placeholder="Username"
+            value={state.username}
+            onChange={(e) => dispatch({ type: "SET_USERNAME", payload: e.target.value })}
+            className="w-36 px-2 py-1.5 text-xs border border-gray-200 rounded-lg bg-white focus:ring-1 focus:ring-gray-300 focus:border-gray-300 transition-all"
+            whileHover={{ y: -1 }}
+            whileTap={{ scale: 0.98 }}
+          />
+          <div className="relative">
+            <motion.input
+              type={showPassword ? "text" : "password"}
+              placeholder="Password"
+              value={state.password}
+              onChange={(e) => dispatch({ type: "SET_PASSWORD", payload: e.target.value })}
+              className="w-36 px-2 py-1.5 text-xs border border-gray-200 rounded-lg bg-white focus:ring-1 focus:ring-gray-300 focus:border-gray-300 transition-all pr-8"
+              whileHover={{ y: -1 }}
+              whileTap={{ scale: 0.98 }}
+            />
+            <motion.button
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              {showPassword ? <FiEyeOff size={14} /> : <FiEye size={14} />}
+            </motion.button>
+          </div>
+        </div>
+      </div>
+    )}
 
-                {state.authType === "BearerToken" && (
-                  <div>
-                    <label className="block text-xs text-gray-500 mb-1">Token</label>
-                    <div className="relative">
-                      <input
-                        type={showPassword ? "text" : "password"}
-                        value={state.password}
-                        onChange={(e) => dispatch({ type: "SET_PASSWORD", payload: e.target.value })}
-                        className="w-full px-3 py-2 text-xs border border-gray-200 rounded-lg pr-8 focus:ring-1 focus:ring-gray-300"
-                      />
-                      <button
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                      >
-                        {showPassword ? <FiEyeOff size={14} /> : <FiEye size={14} />}
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
+    {state.authType === "BearerToken" && (
+      <div className="relative">
+        <motion.input
+          type={showPassword ? "text" : "password"}
+          placeholder="Bearer Token"
+          value={state.password}
+          onChange={(e) => dispatch({ type: "SET_PASSWORD", payload: e.target.value })}
+          className="w-36 px-2 py-1.5 text-xs border border-gray-200 rounded-lg bg-white focus:ring-1 focus:ring-gray-300 focus:border-gray-300 transition-all pr-8"
+          whileHover={{ y: -1 }}
+          whileTap={{ scale: 0.98 }}
+        />
+        <motion.button
+          onClick={() => setShowPassword(!showPassword)}
+          className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          {showPassword ? <FiEyeOff size={14} /> : <FiEye size={14} />}
+        </motion.button>
+      </div>
+    )}
+  </div>
+)}
 
             {state.activeSection === "headers" && (
               <HeadersSection 

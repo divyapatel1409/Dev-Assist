@@ -29,7 +29,7 @@ const ResponsePanel = ({ response }) => {
     data: {}
   };
 
-  // Tab sections configuration matching request panel style
+  // Tab sections configuration
   const tabSections = [
     { id: "body", label: "Body", icon: <FiCode size={16} className="opacity-70" /> },
     { id: "headers", label: "Headers", icon: <FiFileText size={16} className="opacity-70" /> },
@@ -71,7 +71,7 @@ const ResponsePanel = ({ response }) => {
       <div className="flex justify-between items-center px-4 py-3 border-b border-gray-100">
         <div className="flex items-center gap-2">
           <motion.div
-            className="w-2 h-2 rounded-full bg-green-500"
+            className="w-2 h-2 rounded-full bg-green-900"
             animate={{ scale: [1, 1.2, 1], opacity: [1, 0.8, 1] }}
             transition={{ duration: 2, repeat: Infinity }}
           />
@@ -140,7 +140,7 @@ const ResponsePanel = ({ response }) => {
 
       {/* Scrollable Content */}
       <div className="flex-1 overflow-auto p-4 pt-3">
-        {/* Tabs - Matching request panel style */}
+        {/* Tabs */}
         <div className="flex gap-1.5 bg-gray-50 p-1 rounded-lg mb-4">
           {tabSections.map((section) => (
             <motion.button
