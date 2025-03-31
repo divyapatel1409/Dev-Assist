@@ -90,7 +90,7 @@ const ListItem = ({ item, selectedOption, getMethodColor }) => (
   </motion.div>
 );
 
-const Sidebar = ({ onNewRequest, isSidebarVisible }) => {
+const Sidebar = ({ onNewRequest, isSidebarVisible, requests = [] }) => {
   const [filterText, setFilterText] = useState("");
   const [selectedOption, setSelectedOption] = useState("");
   const [isMobile, setIsMobile] = useState(false);
@@ -168,10 +168,13 @@ const Sidebar = ({ onNewRequest, isSidebarVisible }) => {
                 </div>
 
                 <motion.button 
-                  onClick={onNewRequest}
-                  className="w-full py-2.5 bg-gray-900 text-white text-sm font-medium rounded-lg flex items-center justify-center gap-2 hover:bg-gray-800 transition-colors"
-                  whileHover={{ y: -1 }}
-                  whileTap={{ scale: 0.98 }}
+                  onClick={() => requests.length < 20 && onNewRequest()}
+                  className={`w-full py-2.5 text-white text-sm font-medium rounded-lg flex items-center justify-center gap-2 transition-colors ${
+                    requests.length >= 20 ? "bg-gray-400 cursor-not-allowed" : "bg-gray-900 hover:bg-gray-800"
+                  }`}
+                  whileHover={requests.length < 20 ? { y: -1 } : {}}
+                  whileTap={requests.length < 20 ? { scale: 0.98 } : {}}
+                  disabled={requests.length >= 20}
                 >
                   <FiPlus size={16} />
                   <span>New Request</span>
