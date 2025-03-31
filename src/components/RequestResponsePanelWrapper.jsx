@@ -1,34 +1,32 @@
 import React, { useState } from "react";
 import useResizablePanel from "../hooks/useResizablePanel";
-import MultiReqTab from "./MultiReqTab"; // Make sure the import name matches the file name
+import MultiReqTab from "./MultiReqTab";
 import ResponsePanel from "./ResponsePanel";
 import { BsThreeDots } from "react-icons/bs";
 
-const RequestResponsePanelWrapper = ({ isSidebarVisible }) => {
+const RequestResponsePanelWrapper = ({ 
+  isSidebarVisible,
+  requests,
+  setRequests,
+  activeRequestId,
+  setActiveRequestId,
+  onNewRequest
+}) => {
   const [expandedPanel, setExpandedPanel] = useState(null);
   const { topHeight, bottomHeight, handleMouseDown } = useResizablePanel();
   const [responseData, setResponseData] = useState(null);
 
-  // State to manage the list of open requests
-  const [requests, setRequests] = useState([]);
-  // State to track the currently active tab
-  const [activeTab, setActiveTab] = useState(null);
-
-  // Function to create a new request
-  const handleNewRequest = () => {
-    const newRequest = {
-      id: `request-${Date.now()}`, // Unique ID for the request
-      url: "", // Default URL (can be empty initially)
-      method: "GET", // Default HTTP method
-      isExpanded: true, // Whether the request panel is expanded
-    };
-    setRequests((prevRequests) => [...prevRequests, newRequest]); // Add the new request to the list
-    setActiveTab(newRequest.id); // Set the new request as the active tab
-  };
-
-  // Function to handle response from a request
   const handleResponse = (id, response) => {
     setResponseData(response);
+  };
+
+  const handleCloseRequest = (id) => {
+    const newRequests = requests.filter(request => request.id !== id);
+    setRequests(newRequests);
+    
+    if (activeRequestId === id) {
+      setActiveRequestId(newRequests.length > 0 ? newRequests[0].id : null);
+    }
   };
 
   const getTopPanelHeight = () => {
@@ -47,7 +45,6 @@ const RequestResponsePanelWrapper = ({ isSidebarVisible }) => {
     ? "flex flex-col flex-grow"
     : "flex flex-col flex-grow";
 
-  // Function to handle minimize/maximize
   const handleMinimize = (panel) => {
     if (expandedPanel === panel) {
       setExpandedPanel(null);
@@ -58,7 +55,6 @@ const RequestResponsePanelWrapper = ({ isSidebarVisible }) => {
 
   return (
     <div className={cssClass}>
-      {/* Right panel top block - Request Block */}
       <div
         className="overflow-auto rounded-none"
         style={{height:getTopPanelHeight()}}
@@ -66,14 +62,14 @@ const RequestResponsePanelWrapper = ({ isSidebarVisible }) => {
         <MultiReqTab
           requests={requests}
           setRequests={setRequests}
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          onNewRequest={handleNewRequest} // Pass the function to MultiReqTab
+          activeTab={activeRequestId}
+          setActiveTab={setActiveRequestId}
+          onNewRequest={onNewRequest}
+          onCloseRequest={handleCloseRequest}
           onResponseReceived={handleResponse}
         />
       </div>
 
-      {/* Resizable Divider - Only show when not expanded */}
       {!expandedPanel && (
         <div
           className="relative border-gray-300 cursor-ns-resize border-b group hover:border-gray-400"
@@ -86,7 +82,6 @@ const RequestResponsePanelWrapper = ({ isSidebarVisible }) => {
         </div>
       )}
 
-      {/* Right panel bottom block - Response Block */}
       <div
         className="overflow-auto"
        style={{ height:getBottomPanelHeight()}}

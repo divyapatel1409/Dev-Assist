@@ -12,48 +12,50 @@ const BodyContainer = () => {
   const { user, setUser } = useContext(AuthContext);
   const [activeTab, setActiveTab] = useState(TabsConstants.API_HELPER);
   const [isMobile, setIsMobile] = useState(false);
-    // State to manage the list of open requests
-    const [requests, setRequests] = useState([]);
-    
-  // Check if the screen is mobile or tablet
+  const [requests, setRequests] = useState([]);
+  const [activeRequestId, setActiveRequestId] = useState(null);
+
   useEffect(() => {
     const checkScreenSize = () => {
       const mobile = window.innerWidth < 768;
       setIsMobile(mobile);
       
-      // Auto-hide sidebar on mobile, auto-show on desktop
       if (mobile) {
         setIsSidebarVisible(false);
       } else if (!mobile && activeTab === TabsConstants.API_HELPER) {
-        // Only auto-show sidebar when on API_HELPER tab and not on mobile
         setIsSidebarVisible(true);
       }
     };
 
-    // Initial check
     checkScreenSize();
-
-    // Add event listener for window resize
     window.addEventListener("resize", checkScreenSize);
-
-    // Clean up the event listener on component unmount
     return () => window.removeEventListener("resize", checkScreenSize);
-  }, [activeTab]); // Added activeTab as dependency
+  }, [activeTab]);
 
   const toggleSidebar = () => {
     setIsSidebarVisible(!isSidebarVisible);
   };
 
   const handleLogout = () => {
-    setUser(null); // Clear user from context
+    setUser(null);
   };
 
-  // Function to create a new request
   const handleNewRequest = () => {
-    console.log("New request created");
-    // You can add logic here to create a new request
+    if (requests.length >= 20) return;
     
-    // Auto-hide sidebar on mobile after creating a new request
+    const newRequest = {
+      id: `req-${Date.now()}`,
+      method: 'GET',
+      url: '',
+      headers: [{ key: '', value: '', checked: false }],
+      params: [{ key: '', value: '', checked: false }],
+      body: '',
+      isExpanded: true
+    };
+    
+    setRequests([...requests, newRequest]);
+    setActiveRequestId(newRequest.id);
+    
     if (isMobile) {
       setIsSidebarVisible(false);
     }
@@ -64,7 +66,16 @@ const BodyContainer = () => {
       case TabsConstants.ACCOUNT:
         return <AccountWrapper />;
       case TabsConstants.API_HELPER:
-        return <RequestResponsePanelWrapper isSidebarVisible={isSidebarVisible} />;
+        return (
+          <RequestResponsePanelWrapper 
+            isSidebarVisible={isSidebarVisible}
+            requests={requests}
+            setRequests={setRequests}
+            activeRequestId={activeRequestId}
+            setActiveRequestId={setActiveRequestId}
+            onNewRequest={handleNewRequest}
+          />
+        );
       case TabsConstants.REGEX_HELPER:
         return <RegexHelperWrapper />;
       default:
@@ -79,7 +90,6 @@ const BodyContainer = () => {
   }, [user]);
 
   useEffect(() => {
-    // Auto-hide sidebar when switching to non-API_HELPER tabs on mobile
     if (isMobile && activeTab !== TabsConstants.API_HELPER && isSidebarVisible) {
       setIsSidebarVisible(false);
     }
@@ -88,7 +98,6 @@ const BodyContainer = () => {
   return (
     <div className="flex flex-col h-screen text-black">
       <nav className="flex items-center justify-between bg-white h-12 px-4 border-b border-gray-300 shadow-sm">
-        {/* Left: Sidebar Toggle Button + Tabs */}
         <div className="flex items-center space-x-4">
           <button
             onClick={toggleSidebar}
@@ -121,12 +130,10 @@ const BodyContainer = () => {
           </div>
         </div>
 
-        {/* Middle: Title (Header) */}
         <h1 className="text-md font-semibold tracking-wide text-gray-800 mx-auto hidden sm:block">
           DevAssist
         </h1>
 
-        {/* Right: User/Login Actions */}
         <div>
           {user ? (
             <div className="flex items-center space-x-4">
@@ -151,19 +158,17 @@ const BodyContainer = () => {
         </div>
       </nav>
 
-      {/* Main Content Below Navbar */}
       <div className="flex flex-1 relative overflow-hidden">
-        {/* Left Sidebar */}
         {activeTab === TabsConstants.API_HELPER && (
           <SidebarWrapper 
             activeTab={activeTab} 
             onNewRequest={handleNewRequest} 
-            isSidebarVisible={isSidebarVisible} 
+            isSidebarVisible={isSidebarVisible}
+            requests={requests}
           />
         )}
 
-        {/* Main Content */}
-        <div className={`flex-1 w-full transition-all duration-300 ${isMobile && isSidebarVisible ? 'ml-0' : ''}`}>
+        <div className={`flex-1 w-full transition-all duration-300 ${isMobile && isSidebarVisible ? 'ml-0' : ''}`} style={{ overflow: 'hidden' }}>
           {getComponent()}
         </div>
       </div>
