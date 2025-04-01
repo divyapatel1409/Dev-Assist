@@ -7,30 +7,12 @@ import { AuthContext } from "../context/AuthContext";
 
 // PayPalDonation Component
 const PayPalDonation = ({ isVisible, onClose }) => {
-  const handleDonateClick = async () => {
-    try {
-      // Get the active tab
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      
-      if (!tab) {
-        console.error('No active tab found');
-        return;
-      }
-
-      // First, inject the content script
-      await chrome.scripting.executeScript({
-        target: { tabId: tab.id },
-        files: ['src/contentScripts/paypalButton.js']
-      });
-
-      // Then send the message to show PayPal button
-      await chrome.tabs.sendMessage(tab.id, { type: 'SHOW_PAYPAL' });
-      
-      // Close the donation panel
-      onClose();
-    } catch (error) {
-      console.error('Error injecting PayPal button:', error);
-    }
+  const handleDonateClick = () => {
+    // Redirect to your web donation page
+    window.open('http://127.0.0.1:5500/index.html', '_blank');
+    
+    // Close the donation panel
+    onClose();
   };
 
   return (
