@@ -61,6 +61,39 @@ const BodyContainer = () => {
     }
   };
 
+  const handleRequestClick = (savedRequest) => {
+    if (requests.length >= 20) {
+      // Show error message or handle max limit
+      return;
+    }
+
+    // Convert the saved request to the format expected by RequestPanel
+    const newRequest = {
+      id: `req-${Date.now()}`,
+      method: savedRequest.method,
+      url: savedRequest.url,
+      headers: Object.entries(savedRequest.headers || {}).map(([key, value]) => ({
+        key,
+        value,
+        checked: true
+      })),
+      params: Object.entries(savedRequest.params || {}).map(([key, value]) => ({
+        key,
+        value,
+        checked: true
+      })),
+      body: savedRequest.body || '',
+      isExpanded: true
+    };
+
+    setRequests([...requests, newRequest]);
+    setActiveRequestId(newRequest.id);
+
+    if (isMobile) {
+      setIsSidebarVisible(false);
+    }
+  };
+
   const getComponent = () => {
     switch (activeTab) {
       case TabsConstants.ACCOUNT:
@@ -165,6 +198,7 @@ const BodyContainer = () => {
             onNewRequest={handleNewRequest} 
             isSidebarVisible={isSidebarVisible}
             requests={requests}
+            onRequestClick={handleRequestClick}
           />
         )}
 

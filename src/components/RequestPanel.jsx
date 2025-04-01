@@ -1,4 +1,4 @@
-import React, { useReducer, useState, useEffect } from "react";
+import React, { useReducer, useState, useEffect, useContext } from "react";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
 import { requestReducer, initialState } from "./requestPanelComponents/requestReducer";
@@ -10,14 +10,17 @@ import { getCollections, createCollection } from "../services/collectionService.
 import { getEnvironments } from "../services/envService.js";
 import { replaceEnvVariables } from '../utils/environmentUtils.js';
 import { createEnvironment } from "../services/envService.js";
+import { AuthContext } from "../context/AuthContext";
 import { 
   FiSend, FiX, FiSearch, FiPlus, 
   FiChevronUp, FiChevronDown, FiLoader, 
   FiCheckCircle, FiAlertCircle, FiKey, 
-  FiFileText, FiCode, FiEye, FiEyeOff 
+  FiFileText, FiCode, FiEye, FiEyeOff,
+  FiSave
 } from "react-icons/fi";
 
 const RequestPanel = ({ id, request, isExpanded, onToggle, topHeight, onResponse }) => {
+  const { user } = useContext(AuthContext);
   const [state, dispatch] = useReducer(requestReducer, {
     ...initialState,
     method: request.method || 'GET',
@@ -99,6 +102,10 @@ const RequestPanel = ({ id, request, isExpanded, onToggle, topHeight, onResponse
       }
     };
     fetchData();
+
+    const interval = setInterval(fetchData, 30000); // Fetch every 30 seconds
+
+  return () => clearInterval(interval);
   }, []);
 
   const handleSendRequest = async () => {
@@ -153,7 +160,7 @@ const RequestPanel = ({ id, request, isExpanded, onToggle, topHeight, onResponse
       
       if (selectedCollection) {
         try {
-          await axios.post('/api/request', {
+          await axios.post('http://localhost:5001/api/request', {
             method: state.method,
             url: state.url,
             headers: filteredHeaders,
@@ -176,6 +183,70 @@ const RequestPanel = ({ id, request, isExpanded, onToggle, topHeight, onResponse
       setTimeout(() => dispatch({ type: "CLEAR_ERROR" }), 3000);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleSaveRequest = async () => {
+    if (!user) {
+      dispatch({ type: "SET_ERROR", payload: "Please login to save requests" });
+      setTimeout(() => dispatch({ type: "CLEAR_ERROR" }), 3000);
+      return;
+    }
+
+    if (!state.url) {
+      dispatch({ type: "SET_ERROR", payload: "Please enter a URL before saving the request" });
+      setTimeout(() => dispatch({ type: "CLEAR_ERROR" }), 3000);
+      return;
+    }
+
+    if (!selectedCollection) {
+      dispatch({ type: "SET_ERROR", payload: "Please select a collection to save the request" });
+      setTimeout(() => dispatch({ type: "CLEAR_ERROR" }), 3000);
+      return;
+    }
+
+    try {
+      let envVariables = [];
+      if (selectedEnvironment) {
+        const env = environments.find(env => env._id === selectedEnvironment);
+        if (env) envVariables = env.variables;
+      }
+      
+      const filteredHeaders = state.headers
+        .filter((header) => header.checked && header.key)
+        .reduce((acc, { key, value }) => ({
+          ...acc, 
+          [key]: replaceEnvVariables(value, envVariables)
+        }), {});
+
+      const queryParams = state.params.reduce((acc, { key, value }) => {
+        if (key.trim() !== "") {
+          acc[key] = replaceEnvVariables(value, envVariables);
+        }
+        return acc;
+      }, {});
+
+      const processedUrl = replaceEnvVariables(state.url, envVariables);
+      const processedBody = state.method !== "GET" && state.body 
+        ? replaceEnvVariables(state.body, envVariables) 
+        : undefined;
+
+      await axios.post('http://localhost:5001/api/request', {
+        method: state.method,
+        url: state.url,
+        headers: filteredHeaders,
+        body: processedBody,
+        params: queryParams,
+        collectionId: selectedCollection
+      }, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+
+      dispatch({ type: "SET_SUCCESS", payload: "Request saved successfully" });
+      setTimeout(() => dispatch({ type: "CLEAR_SUCCESS" }), 3000);
+    } catch (error) {
+      dispatch({ type: "SET_ERROR", payload: error.message || "Failed to save request" });
+      setTimeout(() => dispatch({ type: "CLEAR_ERROR" }), 3000);
     }
   };
 
@@ -267,14 +338,27 @@ const RequestPanel = ({ id, request, isExpanded, onToggle, topHeight, onResponse
           />
           <h1 className="text-sm font-medium text-gray-700">Request #{id}</h1>
         </div>
-        <motion.button
-          onClick={onToggle}
-          className="text-gray-400 hover:text-gray-600 transition-colors p-1"
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-        >
-          {isExpanded ? <FiChevronUp size={18} /> : <FiChevronDown size={18} />}
-        </motion.button>
+        <div className="flex items-center gap-2">
+          {user && (
+            <motion.button
+              onClick={handleSaveRequest}
+              className="text-gray-600 hover:text-gray-900 transition-colors p-1.5 rounded-lg hover:bg-gray-100"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              title="Save to Collection"
+            >
+              <FiSave size={16} />
+            </motion.button>
+          )}
+          <motion.button
+            onClick={onToggle}
+            className="text-gray-400 hover:text-gray-600 transition-colors p-1"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+          >
+            {isExpanded ? <FiChevronUp size={18} /> : <FiChevronDown size={18} />}
+          </motion.button>
+        </div>
       </div>
 
       {/* Scrollable Content */}
@@ -387,7 +471,6 @@ const RequestPanel = ({ id, request, isExpanded, onToggle, topHeight, onResponse
               {collections.map(collection => (
                 <option key={collection._id} value={collection._id}>{collection.name}</option>
               ))}
-              <option value="new">+ New Collection</option>
             </select>
           </div>
           

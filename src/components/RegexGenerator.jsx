@@ -10,7 +10,7 @@ const RegexGenerator = ({ setRegex, setTestString }) => {
     setLoading(true);
     setError("");
     try {
-      const response = await fetch("http://localhost:5000/api/regex/gen", {
+      const response = await fetch("http://localhost:5001/api/regex/gen", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
