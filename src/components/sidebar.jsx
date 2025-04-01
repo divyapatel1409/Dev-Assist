@@ -1,9 +1,20 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiPlus, FiSearch, FiX, FiClock, FiFolder, FiCode, FiHeart } from "react-icons/fi";
+import { FiPlus, FiSearch, FiX, FiClock, FiFolder, FiCode, FiHeart, FiChevronDown, FiEdit2, FiCheck } from "react-icons/fi";
+import { getCollections, getCollectionWithRequests, createCollection } from "../services/collectionService";
+import { getEnvironments, updateEnvironment } from "../services/envService";
+import { AuthContext } from "../context/AuthContext";
 
 // PayPalDonation Component
 const PayPalDonation = ({ isVisible, onClose }) => {
+  const handleDonateClick = () => {
+    // Redirect to your web donation page
+    window.open('http://127.0.0.1:5500/index.html', '_blank');
+    
+    // Close the donation panel
+    onClose();
+  };
+
   return (
     <AnimatePresence>
       {isVisible && (
@@ -27,9 +38,12 @@ const PayPalDonation = ({ isVisible, onClose }) => {
             </button>
           </div>
           <p className="text-xs text-gray-500 mb-3">Help us improve this tool with your contribution</p>
-          <div className="w-full h-10 bg-white rounded flex items-center justify-center text-xs text-gray-400 border border-gray-200">
-            [PayPal Button Integration]
-          </div>
+          <button
+            onClick={handleDonateClick}
+            className="w-full h-10 bg-[#0070ba] hover:bg-[#003087] text-white rounded flex items-center justify-center text-sm font-medium transition-colors"
+          >
+            Donate with PayPal
+          </button>
         </motion.div>
       )}
     </AnimatePresence>
@@ -62,17 +76,18 @@ const ToggleButton = ({ option, selectedOption, handleOptionSelect }) => {
 };
 
 // ListItem Component
-const ListItem = ({ item, selectedOption, getMethodColor }) => (
+const ListItem = ({ item, selectedOption, getMethodColor, onClick }) => (
   <motion.div
     className="p-3 bg-white rounded-lg border border-gray-100 hover:border-gray-200 transition-all duration-150 mb-2 cursor-pointer group"
     initial={{ opacity: 0, y: 5 }}
     animate={{ opacity: 1, y: 0 }}
     exit={{ opacity: 0, x: -10 }}
     whileHover={{ translateX: 1 }}
+    onClick={() => onClick(item)}
   >
     <div className="flex items-center justify-between">
       <h3 className="font-medium text-gray-800 text-sm truncate">
-        {item.name}
+        {item.name || item.method}
       </h3>
       {selectedOption === "History" && (
         <span
@@ -90,11 +105,17 @@ const ListItem = ({ item, selectedOption, getMethodColor }) => (
   </motion.div>
 );
 
-const Sidebar = ({ onNewRequest, isSidebarVisible, requests = [] }) => {
-  const [filterText, setFilterText] = useState("");
+const Sidebar = ({ onNewRequest, isSidebarVisible, requests = [], onRequestClick }) => {
+  const { user } = useContext(AuthContext);
   const [selectedOption, setSelectedOption] = useState("");
   const [isMobile, setIsMobile] = useState(false);
   const [showDonation, setShowDonation] = useState(false);
+  const [collections, setCollections] = useState([]);
+  const [selectedCollection, setSelectedCollection] = useState("");
+  const [collectionRequests, setCollectionRequests] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [newCollectionName, setNewCollectionName] = useState("");
+  const [environments, setEnvironments] = useState([]);
 
   useEffect(() => {
     const checkScreenSize = () => setIsMobile(window.innerWidth < 768);
@@ -103,32 +124,67 @@ const Sidebar = ({ onNewRequest, isSidebarVisible, requests = [] }) => {
     return () => window.removeEventListener("resize", checkScreenSize);
   }, []);
 
-  const mockData = {
-    History: [
-      { id: 1, name: "Get User Data", method: "GET", url: "/api/v1/users/123" },
-      { id: 2, name: "Create Post", method: "POST", url: "/api/v1/posts" },
-      { id: 3, name: "Update Profile", method: "PUT", url: "/api/v1/profile" },
-    ],
-    Collection: [
-      { id: 1, name: "User Endpoints", description: "Authentication and user management" },
-      { id: 2, name: "Content API", description: "Posts, comments and media handling" },
-    ],
-    Variable: [
-      { id: 1, name: "API_BASE_URL", value: "https://api.example.com/v1" },
-      { id: 2, name: "AUTH_TOKEN", value: "Bearer eyJhbGciOiJ..." },
-    ],
-  };
+  useEffect(() => {
+    const fetchCollections = async () => {
+      if (!user) return;
+      
+      try {
+        const response = await getCollections();
+        if (response.success) {
+          setCollections(response.data);
+        }
+      } catch (error) {
+        console.error("Error fetching collections:", error);
+      }
+    };
+    fetchCollections();
+  }, [user]);
+
+  useEffect(() => {
+    const fetchCollectionRequests = async () => {
+      if (!selectedCollection || !user) {
+        setCollectionRequests([]);
+        return;
+      }
+
+      setIsLoading(true);
+      try {
+        const response = await getCollectionWithRequests(selectedCollection);
+        if (response.success) {
+          setCollectionRequests(response.data.requests);
+        }
+      } catch (error) {
+        console.error("Error fetching collection requests:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchCollectionRequests();
+  }, [selectedCollection, user]);
+
+  useEffect(() => {
+    const fetchEnvironments = async () => {
+      if (!user) return;
+      
+      try {
+        const response = await getEnvironments();
+        if (response.success) {
+          setEnvironments(response.data);
+        }
+      } catch (error) {
+        console.error("Error fetching environments:", error);
+      }
+    };
+    fetchEnvironments();
+  }, [user]);
 
   const handleOptionSelect = (option) => {
     setSelectedOption(selectedOption === option ? "" : option);
-    setFilterText("");
+    if (option !== "Collection") {
+      setSelectedCollection("");
+      setCollectionRequests([]);
+    }
   };
-
-  const filteredData = selectedOption
-    ? mockData[selectedOption].filter(item =>
-        item.name.toLowerCase().includes(filterText.toLowerCase())
-      )
-    : [];
 
   const getMethodColor = (method) => {
     const colors = {
@@ -138,6 +194,53 @@ const Sidebar = ({ onNewRequest, isSidebarVisible, requests = [] }) => {
       DELETE: "bg-rose-50 text-rose-700"
     };
     return colors[method.toUpperCase()] || "bg-gray-50 text-gray-700";
+  };
+
+  const handleRequestClick = (request) => {
+    if (onRequestClick) {
+      onRequestClick(request);
+    }
+  };
+
+  const handleCreateCollection = async () => {
+    if (!newCollectionName.trim()) return;
+    
+    try {
+      const response = await createCollection({ name: newCollectionName.trim() });
+      if (response.success) {
+        setCollections([...collections, response.data]);
+        setNewCollectionName("");
+      }
+    } catch (error) {
+      console.error("Error creating collection:", error);
+    }
+  };
+
+  const handleEditVariable = (envId, varIndex) => {
+    setEditingVar({ envId, varIndex });
+  };
+
+  const handleUpdateVariable = async (envId, varIndex, newKey, newValue) => {
+    try {
+      const env = environments.find(e => e._id === envId);
+      if (!env) return;
+
+      const updatedVariables = [...env.variables];
+      updatedVariables[varIndex] = { key: newKey, value: newValue };
+
+      const response = await updateEnvironment(envId, {
+        variables: updatedVariables
+      });
+
+      if (response.success) {
+        setEnvironments(environments.map(e => 
+          e._id === envId ? response.data : e
+        ));
+        setEditingVar(null);
+      }
+    } catch (error) {
+      console.error("Error updating variable:", error);
+    }
   };
 
   const sidebarVariants = {
@@ -195,36 +298,85 @@ const Sidebar = ({ onNewRequest, isSidebarVisible, requests = [] }) => {
                   ))}
                 </div>
 
-                {/* Search */}
-                <div className="relative mb-4">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <FiSearch className="text-gray-400" size={14} />
+                {/* Collection Dropdown */}
+                {selectedOption === "Collection" && (
+                  <div className="space-y-3 mb-4">
+                    {user ? (
+                      <>
+                        <div className="relative">
+                          <select
+                            value={selectedCollection}
+                            onChange={(e) => setSelectedCollection(e.target.value)}
+                            className="w-full px-3 py-2 text-xs border border-gray-200 rounded-lg focus:ring-1 focus:ring-gray-300 appearance-none bg-white"
+                          >
+                            <option value="">Select Collection</option>
+                            {collections.map(collection => (
+                              <option key={collection._id} value={collection._id}>
+                                {collection.name}
+                              </option>
+                            ))}
+                          </select>
+                          <FiChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" size={14} />
+                        </div>
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            placeholder="New collection name"
+                            className="flex-1 px-3 py-2 text-xs border border-gray-200 rounded-lg focus:ring-1 focus:ring-gray-300"
+                            value={newCollectionName}
+                            onChange={(e) => setNewCollectionName(e.target.value)}
+                          />
+                          <button
+                            onClick={handleCreateCollection}
+                            className="px-3 py-2 text-xs bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors flex items-center justify-center"
+                          >
+                            <FiPlus size={14} />
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="w-full px-3 py-2 text-xs border border-gray-200 rounded-lg bg-gray-50 text-gray-500">
+                        Please login to access collections
+                      </div>
+                    )}
+                    <FiChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" size={14} />
                   </div>
-                  <input
-                    type="text"
-                    placeholder={selectedOption ? `Filter ${selectedOption}` : "Select category"}
-                    className="w-full pl-9 pr-3 py-2 text-xs border border-gray-200 rounded-lg focus:ring-1 focus:ring-gray-300 focus:border-gray-300 transition-all"
-                    value={filterText}
-                    onChange={(e) => setFilterText(e.target.value)}
-                    disabled={!selectedOption}
-                  />
-                  {filterText && (
-                    <button
-                      onClick={() => setFilterText("")}
-                      className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                    >
-                      <FiX className="text-gray-400 hover:text-gray-600" size={14} />
-                    </button>
-                  )}
-                </div>
+                )}
+
+                {/* Variable Section */}
+{selectedOption === "Variable" && (
+  <div className="space-y-3 mb-4">
+    {user ? (
+      environments.map(env => (
+        <div key={env._id} className="space-y-2">
+          <h4 className="text-xs font-medium text-gray-700">{env.name}</h4>
+          {env.variables.map((variable, index) => (
+            <div key={index} className="flex items-center gap-2 bg-gray-50 p-2 rounded-lg">
+              <div className="flex-1 min-w-0">
+                <div className="text-xs font-medium text-gray-700 truncate">{variable.key}</div>
+                <div className="text-xs text-gray-500 truncate">{variable.value}</div>
+              </div>
+              {/* Edit button removed */}
+            </div>
+          ))}
+        </div>
+      ))
+    ) : (
+      <div className="w-full px-3 py-2 text-xs border border-gray-200 rounded-lg bg-gray-50 text-gray-500">
+        Please login to access variables
+      </div>
+    )}
+  </div>
+)}
+
 
                 {/* Results */}
                 <div className="text-xs text-gray-400 mb-2 flex justify-between px-1">
                   <span>
                     {selectedOption 
-                      ? filterText 
-                        ? `${filteredData.length} items`
-                        : `${mockData[selectedOption].length} ${selectedOption.toLowerCase()}`
+                      ? selectedOption === "Collection" && selectedCollection
+                        ? `${collectionRequests.length} requests`
+                        : `${selectedOption.toLowerCase()}`
                       : ""
                     }
                   </span>
@@ -237,15 +389,62 @@ const Sidebar = ({ onNewRequest, isSidebarVisible, requests = [] }) => {
                 <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
                   <AnimatePresence>
                     {selectedOption ? (
-                      filteredData.length > 0 ? (
-                        filteredData.map((item) => (
-                          <ListItem
-                            key={item.id}
-                            item={item}
-                            selectedOption={selectedOption}
-                            getMethodColor={getMethodColor}
-                          />
-                        ))
+                      selectedOption === "Collection" ? (
+                        !user ? (
+                          <motion.div 
+                            className="flex flex-col items-center justify-center py-8 text-center"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                          >
+                            <div className="bg-gray-100 p-3 rounded-full mb-3">
+                              <FiFolder className="text-gray-400" size={18} />
+                            </div>
+                            <p className="text-gray-500 text-sm">Please login to view collections</p>
+                          </motion.div>
+                        ) : isLoading ? (
+                          <motion.div 
+                            className="flex flex-col items-center justify-center py-8 text-center"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                          >
+                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900 mb-2"></div>
+                            <p className="text-gray-500 text-sm">Loading requests...</p>
+                          </motion.div>
+                        ) : selectedCollection ? (
+                          collectionRequests.length > 0 ? (
+                            collectionRequests.map((request) => (
+                              <ListItem
+                                key={request._id}
+                                item={request}
+                                selectedOption={selectedOption}
+                                getMethodColor={getMethodColor}
+                                onClick={handleRequestClick}
+                              />
+                            ))
+                          ) : (
+                            <motion.div 
+                              className="flex flex-col items-center justify-center py-8 text-center"
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                            >
+                              <div className="bg-gray-100 p-3 rounded-full mb-3">
+                                <FiFolder className="text-gray-400" size={18} />
+                              </div>
+                              <p className="text-gray-500 text-sm">No requests in this collection</p>
+                            </motion.div>
+                          )
+                        ) : (
+                          <motion.div 
+                            className="flex flex-col items-center justify-center py-8 text-center"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                          >
+                            <div className="bg-gray-100 p-3 rounded-full mb-3">
+                              <FiFolder className="text-gray-400" size={18} />
+                            </div>
+                            <p className="text-gray-500 text-sm">Select a collection</p>
+                          </motion.div>
+                        )
                       ) : (
                         <motion.div 
                           className="flex flex-col items-center justify-center py-8 text-center"
@@ -253,11 +452,9 @@ const Sidebar = ({ onNewRequest, isSidebarVisible, requests = [] }) => {
                           animate={{ opacity: 1 }}
                         >
                           <div className="bg-gray-100 p-3 rounded-full mb-3">
-                            <FiSearch className="text-gray-400" size={18} />
+                            <FiFolder className="text-gray-400" size={18} />
                           </div>
-                          <p className="text-gray-500 text-sm">
-                            {filterText ? "No results found" : "No items available"}
-                          </p>
+                          <p className="text-gray-500 text-sm">Select a category</p>
                         </motion.div>
                       )
                     ) : (
