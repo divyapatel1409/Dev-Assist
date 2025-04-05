@@ -99,14 +99,17 @@ export const generateRegex = async (req, res) => {
 
     // Call the Hugging Face API to generate the regex pattern
     const response = await client.chatCompletion({
-      model: "beowolx/CodeNinja-1.0-OpenChat-7B", // Choose a suitable model for your task
+      // model: "beowolx/CodeNinja-1.0-OpenChat-7B", // Choose a suitable model for your task
+			model: "deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct",
       messages: [
         { role: "user", content: aiPrompt } // User's request for the regex
       ],
-      provider: "novita",  // Set provider to Hugging Face
+      // provider: "novita",  // Set provider to Hugging Face
+			provider: "nebius",
       max_tokens: 256,     // Limit response length
       top_p: 0.7,          // Use nucleus sampling
-      temperature: 0.5     // Ensure deterministic output
+      temperature: 0.5 ,    // Ensure deterministic output
+			stream: false
     });
 
     // Extract the regex pattern from the response
