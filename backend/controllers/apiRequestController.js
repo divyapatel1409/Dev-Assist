@@ -4,10 +4,10 @@ import Collection from '../models/collectionModel.js'; // Import the Collection 
 // Create a new API request
 export const createApiRequest = async (req, res) => {
   try {
-    const { method, url, headers, body, params, collectionId } = req.body;
+    const { name, method, url, headers, body, params, collectionId } = req.body;
 
-    if (!method || !url || !collectionId) {
-      return res.status(400).json({ success: false, message: "Method, URL, and collectionId are required" });
+    if (!name || !method || !url || !collectionId) {
+      return res.status(400).json({ success: false, message: "Name, Method, URL, and collectionId are required" });
     }
 
     // Check if the provided collectionId exists
@@ -17,6 +17,7 @@ export const createApiRequest = async (req, res) => {
     }
 
     const newApiRequest = new ApiRequest({
+      name,
       method,
       url,
       headers,
@@ -48,7 +49,7 @@ export const getApiRequest = async (req, res) => {
 // Update an existing API request
 export const updateApiRequest = async (req, res) => {
   try {
-    const { method, url, headers, body, params, collectionId } = req.body;
+    const { name, method, url, headers, body, params, collectionId } = req.body;
 
     // Check if the provided collectionId exists when updating
     if (collectionId) {
@@ -62,6 +63,7 @@ export const updateApiRequest = async (req, res) => {
     if (!apiRequest) return res.status(404).json({ success: false, message: "API request not found" });
 
     // Update fields only if provided
+    apiRequest.name = name || apiRequest.name;
     apiRequest.method = method || apiRequest.method;
     apiRequest.url = url || apiRequest.url;
     apiRequest.headers = headers || apiRequest.headers;

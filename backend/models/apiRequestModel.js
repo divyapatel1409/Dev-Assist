@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 
 const apiRequestSchema = new mongoose.Schema({
   method: { type: String, required: true }, // GET, POST, etc.
+  name: { type: String, required: true }, 
   url: { type: String, required: true },
   headers: { type: Map, of: String },
   body: { type: String },
