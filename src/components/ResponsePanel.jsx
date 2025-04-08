@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   FiSave, FiMenu, FiCode, FiFileText, 
@@ -6,10 +6,50 @@ import {
   FiHardDrive, FiAlertCircle, FiCheckCircle 
 } from "react-icons/fi";
 
+const formatBytes = (bytes) => {
+  if (bytes === 0) return '0B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + sizes[i];
+};
+
 const ResponsePanel = ({ response }) => {
   const [activeTab, setActiveTab] = useState("body");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [responseMetrics, setResponseMetrics] = useState({ time: 0, size: 0 });
   
+  useEffect(() => {
+    if (response) {
+      // Get the most recent network request from Performance API
+      const entries = performance.getEntriesByType('resource');
+      const lastRequest = entries[entries.length - 1];
+      
+      if (lastRequest) {
+        // Calculate total time in milliseconds
+        const totalTime = Math.round(lastRequest.duration);
+        
+        // Get response size
+        const sizeInBytes = lastRequest.transferSize || 
+                           new Blob([JSON.stringify(response)]).size;
+        
+        setResponseMetrics({
+          time: totalTime,
+          size: sizeInBytes
+        });
+      } else {
+        // Fallback to calculating size if Performance API doesn't have the entry
+        const responseString = JSON.stringify(response);
+        const sizeInBytes = new Blob([responseString]).size;
+        
+        setResponseMetrics({
+          time: 0,
+          size: sizeInBytes
+        });
+      }
+    }
+  }, [response]);
+
   // Convert headers object to array for easier rendering
   const headersArray = response?.headers
     ? Object.entries(response.headers).map(([key, value]) => ({ key, value }))
@@ -60,6 +100,10 @@ const ResponsePanel = ({ response }) => {
     return "bg-gray-100 text-gray-800";
   };
 
+  useEffect(()=>{
+    console.log("response:", response)
+  },[response])
+
   return (
     <motion.div
       className="bg-white/95 backdrop-blur-sm rounded-lg border border-gray-100 shadow-sm relative w-full flex flex-col h-full"
@@ -82,13 +126,13 @@ const ResponsePanel = ({ response }) => {
           <div className={`px-2 py-1 rounded-md text-xs ${getStatusColor(safeResponse.status)}`}>
             {safeResponse.status || "No Status"}
           </div>
-          <div className="hidden sm:flex items-center gap-1 text-xs text-gray-500">
+          <div className="flex items-center gap-1 text-xs text-gray-500">
             <FiClock size={12} />
-            <span>{safeResponse.time || "0ms"}</span>
+            <span>{responseMetrics.time ? `${responseMetrics.time}ms` : "0ms"}</span>
           </div>
-          <div className="hidden sm:flex items-center gap-1 text-xs text-gray-500">
+          <div className="flex items-center gap-1 text-xs text-gray-500">
             <FiHardDrive size={12} />
-            <span>{safeResponse.size || "0B"}</span>
+            <span>{formatBytes(responseMetrics.size)}</span>
           </div>
           
           {/* Menu Button */}
