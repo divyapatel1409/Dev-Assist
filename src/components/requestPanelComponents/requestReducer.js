@@ -1,6 +1,7 @@
 export const initialState = {
   method: "GET",
   url: "",
+  name: "New Request",
   params: [{ key: "", value: "" }],
   headers: [
     { key: "Cache-Control", value: "no-cache", checked: false },
@@ -28,6 +29,8 @@ export const requestReducer = (state, action) => {
       return { ...state, method: action.payload };
     case "SET_URL":
       return { ...state, url: action.payload };
+    case "SET_NAME":
+      return { ...state, name: action.payload };
     case "SET_PARAMS":
       return { ...state, params: action.payload };
     case "SET_HEADERS":

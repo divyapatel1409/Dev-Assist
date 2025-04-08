@@ -30,7 +30,8 @@ const RequestPanel = ({ id, request, isExpanded, onToggle, topHeight, onResponse
     body: request.body || '',
     authType: request.authType || 'None',
     username: request.username || '',
-    password: request.password || ''
+    password: request.password || '',
+    name: request.name || `Request #${id}`
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -42,6 +43,8 @@ const RequestPanel = ({ id, request, isExpanded, onToggle, topHeight, onResponse
   const [newCollectionName, setNewCollectionName] = useState("");
   const [newEnvironmentName, setNewEnvironmentName] = useState("");
   const [environmentVariables, setEnvironmentVariables] = useState([{ key: "", value: "" }]);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [requestName, setRequestName] = useState(request.name || `Request #${id}`);
 
   // Updated color scheme to match sidebar
   const colorScheme = {
@@ -108,6 +111,21 @@ const RequestPanel = ({ id, request, isExpanded, onToggle, topHeight, onResponse
   return () => clearInterval(interval);
   }, []);
 
+  const handleNameChange = (e) => {
+    setRequestName(e.target.value);
+  };
+
+  const handleNameBlur = () => {
+    setIsEditingName(false);
+    dispatch({ type: "SET_NAME", payload: requestName });
+  };
+
+  const handleNameKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      handleNameBlur();
+    }
+  };
+
   const handleSendRequest = async () => {
     if (!state.url) {
       dispatch({ type: "SET_ERROR", payload: "Please enter a URL before sending the request" });
@@ -161,6 +179,7 @@ const RequestPanel = ({ id, request, isExpanded, onToggle, topHeight, onResponse
       if (selectedCollection) {
         try {
           await axios.post('http://localhost:5001/api/request', {
+            name: state.name,
             method: state.method,
             url: state.url,
             headers: filteredHeaders,
@@ -232,6 +251,7 @@ const RequestPanel = ({ id, request, isExpanded, onToggle, topHeight, onResponse
         : undefined;
 
       await axios.post('http://localhost:5001/api/request', {
+        name: state.name,
         method: state.method,
         url: state.url,
         headers: filteredHeaders,
@@ -336,7 +356,24 @@ const RequestPanel = ({ id, request, isExpanded, onToggle, topHeight, onResponse
             animate={{ scale: [1, 1.2, 1], opacity: [1, 0.8, 1] }}
             transition={{ duration: 2, repeat: Infinity }}
           />
-          <h1 className="text-sm font-medium text-gray-700">Request #{id}</h1>
+          {isEditingName ? (
+            <input
+              type="text"
+              value={requestName}
+              onChange={handleNameChange}
+              onBlur={handleNameBlur}
+              onKeyDown={handleNameKeyDown}
+              className="text-sm font-medium text-gray-700 bg-transparent border-b border-gray-300 focus:outline-none focus:border-blue-500"
+              autoFocus
+            />
+          ) : (
+            <h1 
+              className="text-sm font-medium text-gray-700 cursor-pointer hover:text-gray-900"
+              onClick={() => setIsEditingName(true)}
+            >
+              {requestName}
+            </h1>
+          )}
         </div>
         <div className="flex items-center gap-2">
           {user && (
