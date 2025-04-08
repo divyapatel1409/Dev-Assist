@@ -16,6 +16,7 @@ export default function RegexCommunityHelper({ setRegex, refresh }) {
       try {
         const response = await fetch(api.API_BASE_URL + "/api/regex");
         const data = await response.json();
+        console.log("regexhelper : ", data)
         if (response.ok && data.success) {
           setRegexData(data.data);
         } else {

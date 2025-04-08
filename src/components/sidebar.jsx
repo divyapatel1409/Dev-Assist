@@ -168,6 +168,7 @@ const Sidebar = ({ onNewRequest, isSidebarVisible, requests = [], onRequestClick
       
       try {
         const response = await getEnvironments();
+        console.log("env : ",response.data)
         if (response.success) {
           setEnvironments(response.data);
         }
