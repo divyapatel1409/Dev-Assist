@@ -250,17 +250,35 @@ const RequestPanel = ({ id, request, isExpanded, onToggle, topHeight, onResponse
         ? replaceEnvVariables(state.body, envVariables) 
         : undefined;
 
-      await axios.post('http://localhost:5001/api/request', {
-        name: state.name,
-        method: state.method,
-        url: state.url,
-        headers: filteredHeaders,
-        body: processedBody,
-        params: queryParams,
-        collectionId: selectedCollection
-      }, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
+        if(!request._id){
+          await axios.post('http://localhost:5001/api/request', {
+            name: state.name,
+            method: state.method,
+            url: state.url,
+            headers: filteredHeaders,
+            body: processedBody,
+            params: queryParams,
+            collectionId: selectedCollection
+          }, {
+            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+          });
+        } else {
+          await axios.put(`http://localhost:5001/api/request/${request._id}`, {
+            name: state.name,
+            method: state.method,
+            url: state.url,
+            headers: filteredHeaders,
+            body: processedBody,
+            params: queryParams,
+            collectionId: selectedCollection
+          }, {
+            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+          });
+        } 
+
+        
+
+      
 
       dispatch({ type: "SET_SUCCESS", payload: "Request saved successfully" });
       setTimeout(() => dispatch({ type: "CLEAR_SUCCESS" }), 3000);
