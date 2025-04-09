@@ -151,6 +151,7 @@ const Sidebar = ({ onNewRequest, isSidebarVisible, requests = [], onRequestClick
       try {
         const response = await getCollectionWithRequests(selectedCollection);
         if (response.success) {
+          console.log("response:", response, "response.data : ", response.data , "response.data.requests", response.data.requests)
           setCollectionRequests(response.data.requests);
         }
       } catch (error) {

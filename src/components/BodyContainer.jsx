@@ -66,9 +66,9 @@ const BodyContainer = () => {
       // Show error message or handle max limit
       return;
     }
-
     // Convert the saved request to the format expected by RequestPanel
     const newRequest = {
+      _id : savedRequest._id,
       id: `req-${Date.now()}`,
       method: savedRequest.method,
       url: savedRequest.url,
