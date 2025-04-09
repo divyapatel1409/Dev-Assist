@@ -290,6 +290,11 @@ const Sidebar = ({ onNewRequest, isSidebarVisible, requests = [], onRequestClick
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
       });
+
+      // ✅ Update the request list after successful delete
+    setCollectionRequests(prevRequests => 
+      prevRequests.filter(request => request._id !== id)
+    );
   
       dispatch({ type: 'SET_SUCCESS', payload: 'Request deleted successfully' });
       setTimeout(() => dispatch({ type: 'CLEAR_SUCCESS' }), 3000);
