@@ -10,8 +10,9 @@ export const createEnv = async (req, res) => {
       return res.send({ success: false, message: "Please enter all required fields [name, variables]" });
     }
 
-    const newEnv = new Env({ name, variables });
-    await newEnv.save();
+		const newEnv = new Env({ name, variables, userId: req.user._id });
+		await newEnv.save();
+		
     
     return res.status(201).json({ success: true, message: "Environment created successfully", data: newEnv });
   } catch (error) {
@@ -22,7 +23,7 @@ export const createEnv = async (req, res) => {
 //  Get all environments
 export const getAllEnvs = async (req, res) => {
   try {
-    const envs = await Env.find();
+		const envs = await Env.find({ userId: req.user._id });
     return res.status(200).json({ success: true, data: envs });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
@@ -32,11 +33,11 @@ export const getAllEnvs = async (req, res) => {
 //  Get a single environment by ID
 export const getEnvById = async (req, res) => {
   try {
-    const env = await Env.findById(req.params.id);
-    if (!env) {
-      return res.status(404).json({ success: false, message: "Environment not found" });
-    }
-    return res.status(200).json({ success: true, data: env });
+		const env = await Env.findOne({ _id: req.params.id, userId: req.user._id });
+
+		if (!env) return res.status(404).json({ success: false, message: "Environment not found or unauthorized" });
+
+		return res.status(200).json({ success: true, data: env });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });
   }
@@ -52,15 +53,14 @@ export const updateEnv = async (req, res) => {
       return res.send({ success: false, message: "Please enter all required fields" });
     }
 
-    const updatedEnv = await Env.findByIdAndUpdate(
-      req.params.id,
-      { name, variables },
-      { new: true }
-    );
-
-    if (!updatedEnv) {
-      return res.status(404).json({ success: false, message: "Environment not found" });
-    }
+		const updatedEnv = await Env.findOneAndUpdate(
+			{ _id: req.params.id, userId: req.user._id },
+			{ name, variables },
+			{ new: true }
+		);
+		if (!updatedEnv) {
+			return res.status(404).json({ success: false, message: "Environment not found or unauthorized" });
+		}
 
     return res.status(200).json({ success: true, message: "Environment updated successfully", data: updatedEnv });
   } catch (error) {
@@ -71,10 +71,10 @@ export const updateEnv = async (req, res) => {
 // Delete an environment
 export const deleteEnv = async (req, res) => {
   try {
-    const deletedEnv = await Env.findByIdAndDelete(req.params.id);
-    if (!deletedEnv) {
-      return res.status(404).json({ success: false, message: "Environment not found" });
-    }
+		const deletedEnv = await Env.findOneAndDelete({ _id: req.params.id, userId: req.user._id });
+		if (!deletedEnv) {
+			return res.status(404).json({ success: false, message: "Environment not found or unauthorized" });
+		}
     return res.status(200).json({ success: true, message: "Environment deleted successfully" });
   } catch (error) {
     return res.status(500).json({ success: false, message: error.message });

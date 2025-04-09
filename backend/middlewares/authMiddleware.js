@@ -1,25 +1,24 @@
 import jwt from 'jsonwebtoken'
-const verifyToken = (req, res, next)=>{
-	const token = req.header('Authorization');
-	console.log(token);
-	
-	if(!token) return res.status(401).json({success: false, message: 'Access denied! Token not found'})
+const verifyToken = (req, res, next) => {
+  const token = req.header('Authorization');
 
-	try {
-		const isValid = jwt.verify(token.split(" ")[1], process.env.JWT_SECRET);
-		console.log(isValid);
-		
-		if(isValid){
-			next();
-		}else{
-			return res.status(401).json({success: true, message: 'Token Expired, please login again'})
-		}
-	} catch (error) {
-		console.log(error);
-		
-		return res.status(500).json({success: false, message: error.message})
-	}
-}
+  if (!token) return res.status(401).json({ success: false, message: 'Access denied! Token not found' });
+
+  try {
+    const decoded = jwt.verify(token.split(" ")[1], process.env.JWT_SECRET);
+    
+    if (decoded) {
+			req.user = decoded; // Make sure your token contains userId (e.g., {_id, email})
+			console.log(decoded)
+      next();
+    } else {
+      return res.status(401).json({ success: false, message: 'Token expired, please login again' });
+    }
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 
 export {
 	verifyToken

@@ -91,7 +91,7 @@ export default function RegexHelperForm() {
             </button>
           </div>
           {/* Ai regex generator */}
-          <RegexGenerator setRegex={setRegex} setTestString={setTestString} />
+          <RegexGenerator setRegex={setRegex} testString={testString} setTestString={setTestString} />
 
           <div className="flex items-center w-full my-2.5">
             <div className="flex-grow border-t border-gray-200"></div>
