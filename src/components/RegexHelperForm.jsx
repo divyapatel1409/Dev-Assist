@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import RegexCommunityHelper from "./RegexCommunityHelper";
 import api from "./../appConfig.js";
 import { GiArtificialIntelligence } from "react-icons/gi";
 import { BsRegex } from "react-icons/bs";
 import RegexGenerator from "./RegexGenerator.jsx";
+import { AuthContext } from "../context/AuthContext.jsx";
 
 export default function RegexHelperForm() {
   const [regex, setRegex] = useState("");
@@ -16,6 +17,9 @@ export default function RegexHelperForm() {
   const [regexName, setRegexName] = useState("");
   const [regexDescription, setRegexDescription] = useState("");
   const [refreshCommunity, setRefreshCommunity] = useState(false);
+	const { user, setUser } = useContext(AuthContext);
+
+	console.log(user)
 
   useEffect(() => {
     if (regex && testString) handleTest();
@@ -91,7 +95,7 @@ export default function RegexHelperForm() {
             </button>
           </div>
           {/* Ai regex generator */}
-          <RegexGenerator setRegex={setRegex} setTestString={setTestString} />
+          <RegexGenerator setRegex={setRegex} testString={testString} setTestString={setTestString} />
 
           <div className="flex items-center w-full my-2.5">
             <div className="flex-grow border-t border-gray-200"></div>
@@ -181,12 +185,15 @@ export default function RegexHelperForm() {
               Clear
             </button>
 
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="px-4 py-2 bg-blue-500 text-white rounded"
-            >
-              Share With Community
-            </button>
+							{
+								user &&
+								<button
+									onClick={() => setIsModalOpen(true)}
+									className="px-4 py-2 bg-blue-500 text-white rounded"
+								>
+									Share With Community
+								</button>
+							}
           </div>
 
           {/* Results */}

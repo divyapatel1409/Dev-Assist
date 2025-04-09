@@ -8,7 +8,8 @@ const envSchema = new mongoose.Schema({
       value: { type: String, required: true }
     }
   ],
-  createdAt: { type: Date, default: Date.now }
+  createdAt: { type: Date, default: Date.now },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'user', required: true },
 });
 
 const envModel = mongoose.models.environment || mongoose.model("environment", envSchema);
