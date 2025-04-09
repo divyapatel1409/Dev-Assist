@@ -61,6 +61,7 @@ export const requestReducer = (state, action) => {
       return { ...state, success: action.payload };
     case "CLEAR_SUCCESS":
       return { ...state, success: null };
+      
     default:
       return state;
   }
