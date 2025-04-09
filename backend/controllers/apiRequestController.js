@@ -18,12 +18,15 @@ export const createApiRequest = async (req, res) => {
 			name, method, url, headers, body, params, collectionId,
 			userId: req.user._id
 		});
-		
+		console.log('working')
 
     await newApiRequest.save();
+		console.log('working')
 
     return res.status(201).json({ success: true, message: "API request created", data: newApiRequest });
   } catch (error) {
+		console.log('error occured', req.user)
+
     return res.status(500).json({ success: false, message: error.message });
   }
 };
