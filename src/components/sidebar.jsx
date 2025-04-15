@@ -1,9 +1,11 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useReducer } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiPlus, FiSearch, FiX, FiClock, FiFolder, FiCode, FiHeart, FiChevronDown, FiEdit2, FiCheck } from "react-icons/fi";
 import { getCollections, getCollectionWithRequests, createCollection } from "../services/collectionService";
 import { getEnvironments, updateEnvironment } from "../services/envService";
 import { AuthContext } from "../context/AuthContext";
+import axios from "axios";
+import { initialState, requestReducer } from "./requestPanelComponents/requestReducer";
 
 // PayPalDonation Component
 const PayPalDonation = ({ isVisible, onClose }) => {
@@ -76,7 +78,7 @@ const ToggleButton = ({ option, selectedOption, handleOptionSelect }) => {
 };
 
 // ListItem Component
-const ListItem = ({ item, selectedOption, getMethodColor, onClick }) => (
+const ListItem = ({ item, selectedOption, getMethodColor, onClick, onDelete }) => (
   <motion.div
     className="p-3 bg-white rounded-lg border border-gray-100 hover:border-gray-200 transition-all duration-150 mb-2 cursor-pointer group"
     initial={{ opacity: 0, y: 5 }}
@@ -86,26 +88,56 @@ const ListItem = ({ item, selectedOption, getMethodColor, onClick }) => (
     onClick={() => onClick(item)}
   >
     <div className="flex items-center justify-between">
-      <h3 className="font-medium text-gray-800 text-sm truncate">
-        {item.name || item.method}
-      </h3>
-      {selectedOption === "History" && (
-        <span
-          className={`px-2 py-1 text-[10px] font-medium rounded ${getMethodColor(item.method)}`}
+      <div className="flex flex-col w-full">
+        <div className="flex items-center justify-between w-full">
+          <h3 className="font-medium text-gray-800 text-sm truncate">
+            {item.name || item.method}
+          </h3>
+          {selectedOption === "History" && (
+            <span
+              className={`px-2 py-1 text-[10px] font-medium rounded ${getMethodColor(item.method)}`}
+            >
+              {item.method}
+            </span>
+          )}
+        </div>
+        <p className="text-xs text-gray-500 mt-1 truncate">
+          {selectedOption === "History" && item.url}
+          {selectedOption === "Collection" && item.description}
+          {selectedOption === "Variable" && `Value: ${item.value}`}
+        </p>
+      </div>
+
+      {/* Delete Button */}
+      <button
+        onClick={(e) => {
+          e.stopPropagation(); // prevent triggering onClick for the item
+          onDelete();
+        }}
+        className="ml-3 text-gray-400 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+        title="Delete"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-4 w-4"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
         >
-          {item.method}
-        </span>
-      )}
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M6 18L18 6M6 6l12 12"
+          />
+        </svg>
+      </button>
     </div>
-    <p className="text-xs text-gray-500 mt-1 truncate">
-      {selectedOption === "History" && item.url}
-      {selectedOption === "Collection" && item.description}
-      {selectedOption === "Variable" && `Value: ${item.value}`}
-    </p>
   </motion.div>
 );
 
-const Sidebar = ({ onNewRequest, isSidebarVisible, requests = [], onRequestClick }) => {
+
+const Sidebar = ({ onNewRequest, isSidebarVisible, requests = [], onRequestClick, }) => {
   const { user } = useContext(AuthContext);
   const [selectedOption, setSelectedOption] = useState("");
   const [isMobile, setIsMobile] = useState(false);
@@ -116,6 +148,7 @@ const Sidebar = ({ onNewRequest, isSidebarVisible, requests = [], onRequestClick
   const [isLoading, setIsLoading] = useState(false);
   const [newCollectionName, setNewCollectionName] = useState("");
   const [environments, setEnvironments] = useState([]);
+  const [state, dispatch] = useReducer(requestReducer, initialState);
 
   useEffect(() => {
     const checkScreenSize = () => setIsMobile(window.innerWidth < 768);
@@ -249,6 +282,33 @@ const Sidebar = ({ onNewRequest, isSidebarVisible, requests = [], onRequestClick
     open: { width: isMobile ? "280px" : "300px", transition: { type: "spring", damping: 25 } },
     closed: { width: "0px", transition: { type: "spring", damping: 25 } }
   };
+
+  const handleDelete = async (id) => {
+    try {
+      await axios.delete(`http://localhost:5001/api/request/${id}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+
+      // ✅ Update the request list after successful delete
+    setCollectionRequests(prevRequests => 
+      prevRequests.filter(request => request._id !== id)
+    );
+  
+      dispatch({ type: 'SET_SUCCESS', payload: 'Request deleted successfully' });
+      setTimeout(() => dispatch({ type: 'CLEAR_SUCCESS' }), 3000);
+  
+    } catch (error) {
+      dispatch({
+        type: 'SET_ERROR',
+        payload: error.response?.data?.message || 'Failed to delete request',
+      });
+      setTimeout(() => dispatch({ type: 'CLEAR_ERROR' }), 3000);
+    }
+  };
+  
+  
 
   return (
     <>
@@ -415,13 +475,17 @@ const Sidebar = ({ onNewRequest, isSidebarVisible, requests = [], onRequestClick
                         ) : selectedCollection ? (
                           collectionRequests.length > 0 ? (
                             collectionRequests.map((request) => (
+                              
                               <ListItem
                                 key={request._id}
                                 item={request}
                                 selectedOption={selectedOption}
                                 getMethodColor={getMethodColor}
                                 onClick={handleRequestClick}
+                                onDelete={()=>handleDelete(request._id)}
                               />
+                              
+                          
                             ))
                           ) : (
                             <motion.div 
