@@ -5,6 +5,7 @@ import { GiArtificialIntelligence } from "react-icons/gi";
 import { BsRegex } from "react-icons/bs";
 import RegexGenerator from "./RegexGenerator.jsx";
 import { AuthContext } from "../context/AuthContext.jsx";
+import { toast } from "react-toastify";
 
 export default function RegexHelperForm() {
   const [regex, setRegex] = useState("");
@@ -19,11 +20,25 @@ export default function RegexHelperForm() {
   const [refreshCommunity, setRefreshCommunity] = useState(false);
 	const { user, setUser } = useContext(AuthContext);
 
+	// Regex Genertor State lift
+	const [prompt, setPrompt] = useState("");
+	
+
 	console.log(user)
 
   useEffect(() => {
     if (regex && testString) handleTest();
   }, [regex, testString, flags]);
+
+
+
+	const clear = () => {
+		setRegex("");
+		setTestString("");
+		setMatches([]);
+		setError("");
+		setPrompt("")
+	}
 
   const handleTest = () => {
     try {
@@ -43,40 +58,49 @@ export default function RegexHelperForm() {
     setTimeout(() => setCopyStatus(""), 2000);
   };
 
-  const handleShare = async () => {
-    // Build the new regex entry to send to the API
-    const newRegex = {
-      name: regexName,
-      pattern: regex,
-      description: regexDescription,
-    };
-
-    try {
-      const response = await fetch(api.API_BASE_URL + "/api/regex", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(newRegex),
-      });
-      const data = await response.json();
-
-      if (response.ok && data.success) {
-        alert("Regex shared successfully!");
-        // Close the modal and reset share form data
-        setIsModalOpen(false);
-        setRegexName("");
-        setRegexDescription("");
-        // Trigger a refresh in the community helper
-        setRefreshCommunity(!refreshCommunity);
-      } else {
-        alert("Failed to share regex: " + data.message);
-      }
-    } catch (error) {
-      alert("Error sharing regex: " + error.message);
-    }
-  };
-
+	const handleShare = async () => {
+		// Validate that both fields are not empty
+		if (!regexName || !regexDescription) {
+			toast.error("Failed to share regex: " + data.message);
+			return;
+		}
+	
+		// Build the new regex entry to send to the API
+		const newRegex = {
+			name: regexName,
+			pattern: regex,
+			description: regexDescription,
+		};
+	
+		try {
+			const response = await fetch(api.API_BASE_URL + "/api/regex", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify(newRegex),
+			});
+			const data = await response.json();
+	
+			if (response.ok && data.success) {
+				// Show success toast instead of alert
+				toast.success("Regex shared successfully!");
+	
+				// Close the modal and reset share form data
+				setIsModalOpen(false);
+				setRegexName("");
+				setRegexDescription("");
+	
+				// Trigger a refresh in the community helper
+				setRefreshCommunity(!refreshCommunity);
+			} else {
+				toast.error("Failed to share regex: " + data.message);
+			}
+		} catch (error) {
+			toast.error("Error sharing regex: " + error.message);
+		}
+	};
+	
   const scrollToCommunity = () => {
     document.getElementById('community-helper')?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -86,7 +110,7 @@ export default function RegexHelperForm() {
       <div className="flex">
         <div id="regex-helper" className="max-w-3xl mx-auto mt-10 p-6 border rounded shadow-lg bg-gray-100">
           <div className="flex justify-between items-center mb-4">
-            <h1 className="text-2xl font-bold">🔍 Regex Helper</h1>
+            <h1 className="text-2xl font-bold">🔍 AI Regex Master</h1>
             <button 
               onClick={scrollToCommunity}
               className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
@@ -95,7 +119,7 @@ export default function RegexHelperForm() {
             </button>
           </div>
           {/* Ai regex generator */}
-          <RegexGenerator setRegex={setRegex} testString={testString} setTestString={setTestString} />
+          <RegexGenerator prompt={prompt}  setPrompt={setPrompt} setRegex={setRegex} testString={testString} setTestString={setTestString} />
 
           <div className="flex items-center w-full my-2.5">
             <div className="flex-grow border-t border-gray-200"></div>
@@ -174,12 +198,10 @@ export default function RegexHelperForm() {
           {/* Buttons */}
           <div className="flex gap-4">
             <button
-              onClick={() => {
-                setRegex("");
-                setTestString("");
-                setMatches([]);
-                setError("");
-              }}
+              onClick={()=> {
+								clear(); 
+								toast.info("Input fields cleared successfully.");
+							}}
               className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-700"
             >
               Clear
@@ -189,6 +211,7 @@ export default function RegexHelperForm() {
 								user &&
 								<button
 									onClick={() => setIsModalOpen(true)}
+									disabled={!regex}
 									className="px-4 py-2 bg-blue-500 text-white rounded"
 								>
 									Share With Community
@@ -249,58 +272,63 @@ export default function RegexHelperForm() {
         </div>
       </div>
 
-      {/* Modal for sharing */}
-      {isModalOpen && (
-        <div
-          style={{ backgroundColor: "rgba(0, 0, 0, 0.5)" }}
-          className="fixed inset-0 flex justify-center items-center bg-black"
+{/* Modal for sharing */}
+{isModalOpen && (
+  <div
+    style={{ backgroundColor: "rgba(0, 0, 0, 0.5)" }}
+    className="fixed inset-0 flex justify-center items-center bg-black"
+  >
+    <div className="bg-white p-6 rounded shadow-lg w-1/3">
+      <h2 className="text-xl font-bold mb-4">
+        Share Regex with Community
+      </h2>
+
+      <div className="mb-4">
+        <label className="block font-semibold">Regex Name:</label>
+        <input
+          type="text"
+          value={regexName}
+          onChange={(e) => setRegexName(e.target.value)}
+          className="w-full p-2 border rounded"
+          placeholder="Enter Regex name"
+          required
+        />
+      </div>
+
+      <div className="mb-4">
+        <label className="block font-semibold">Description:</label>
+        <textarea
+          value={regexDescription}
+          onChange={(e) => setRegexDescription(e.target.value)}
+          className="w-full p-2 border rounded h-24"
+          placeholder="Enter a brief description"
+          required
+        />
+      </div>
+
+      <div className="flex gap-4">
+        <button
+          onClick={() => setIsModalOpen(false)}
+          className="px-4 py-2 bg-gray-400 text-white rounded"
         >
-          <div className="bg-white p-6 rounded shadow-lg w-1/3">
-            <h2 className="text-xl font-bold mb-4">
-              Share Regex with Community
-            </h2>
-
-            <div className="mb-4">
-              <label className="block font-semibold">Regex Name:</label>
-              <input
-                type="text"
-                value={regexName}
-                onChange={(e) => setRegexName(e.target.value)}
-                className="w-full p-2 border rounded"
-                placeholder="Enter Regex name"
-              />
-            </div>
-
-            <div className="mb-4">
-              <label className="block font-semibold">Description:</label>
-              <textarea
-                value={regexDescription}
-                onChange={(e) => setRegexDescription(e.target.value)}
-                className="w-full p-2 border rounded h-24"
-                placeholder="Enter a brief description"
-              />
-            </div>
-
-            <div className="flex gap-4">
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="px-4 py-2 bg-gray-400 text-white rounded"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleShare}
-                className="px-4 py-2 bg-blue-500 text-white rounded"
-              >
-                Share
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+          Cancel
+        </button>
+        <button
+          onClick={handleShare}
+          className={`px-4 py-2 bg-blue-500 text-white rounded ${
+            !regexName || !regexDescription ? "opacity-50 cursor-not-allowed" : ""
+          }`}
+          disabled={!regexName || !regexDescription}
+        >
+          Share
+        </button>
+      </div>
+    </div>
+  </div>
+)}
 
       {/* Pass refreshCommunity as a prop so the helper can reload the data */}
-        <RegexCommunityHelper setRegex={setRegex} refresh={refreshCommunity} />
+        <RegexCommunityHelper clear={clear} setRegex={setRegex} refresh={refreshCommunity} />
     </>
   );
 }

@@ -1,46 +1,46 @@
 import { useState, useEffect } from "react";
 import { VscRegex } from "react-icons/vsc";
+import { toast } from "react-toastify";
 import api from "./../appConfig.js";
-export default function RegexCommunityHelper({ setRegex, refresh }) {
+
+export default function RegexCommunityHelper({ clear, setRegex, refresh }) {
   const [search, setSearch] = useState("");
   const [regexData, setRegexData] = useState([]);
 
   const setRegexAndScrollToHelper = (regexPattern) => {
+    clear();
     setRegex(regexPattern);
+    toast.info("Regex loaded from community");
     document.getElementById("regex-helper")?.scrollIntoView({ behavior: "smooth" });
   };
 
-  // Fetch regex patterns from the API whenever the component mounts or when refresh changes
   useEffect(() => {
     const fetchRegexData = async () => {
       try {
         const response = await fetch(api.API_BASE_URL + "/api/regex");
         const data = await response.json();
-        console.log("regexhelper : ", data)
         if (response.ok && data.success) {
           setRegexData(data.data);
         } else {
-          console.error("Failed to fetch regex data:", data.message);
+          toast.error("Failed to fetch regex data: " + data.message);
         }
       } catch (error) {
-        console.error("Error fetching regex data:", error);
+        toast.error("Error fetching regex data.");
       }
     };
 
     fetchRegexData();
   }, [refresh]);
 
-  // Filter regex patterns based on search input
   const filteredRegex = regexData.filter((regex) =>
-      regex.pattern.includes(search) ||
-      regex.name.toLowerCase().includes(search.toLowerCase())
+    regex.pattern.includes(search) ||
+    regex.name.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
     <div id="community-helper" className="max-w-3xl mx-auto mt-10 p-6 border rounded-lg shadow-lg bg-gray-100">
       <h2 className="text-xl font-bold mb-4">🔍 Regex Community Helper</h2>
 
-      {/* Search Bar */}
       <input
         type="text"
         placeholder="Search regex by name or pattern..."
@@ -49,7 +49,6 @@ export default function RegexCommunityHelper({ setRegex, refresh }) {
         className="w-full p-2 mb-4 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
       />
 
-      {/* Regex List Section */}
       <div className="space-y-4">
         {filteredRegex.length > 0 ? (
           filteredRegex.map((regex) => (

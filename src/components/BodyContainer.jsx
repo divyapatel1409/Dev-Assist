@@ -158,7 +158,7 @@ const BodyContainer = () => {
               }`}
               onClick={() => setActiveTab(TabsConstants.REGEX_HELPER)}
             >
-              Regex Helper
+              AI Regex Master
             </button>
           </div>
         </div>

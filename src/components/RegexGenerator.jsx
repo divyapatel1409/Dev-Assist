@@ -1,8 +1,7 @@
 import React, { useState } from "react";
-import { BsRegex } from "react-icons/bs";
+import { FaRobot } from "react-icons/fa";
 
-const RegexGenerator = ({ setRegex, setTestString }) => {
-  const [prompt, setPrompt] = useState("");
+const RegexGenerator = ({ prompt, setPrompt, setRegex, setTestString }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -64,7 +63,7 @@ const RegexGenerator = ({ setRegex, setTestString }) => {
           disabled={loading}
           className="flex items-center justify-center bg-blue-500 text-white px-4 py-2 rounded-r-md hover:bg-blue-600 focus:outline-none"
         >
-          {loading ? "..." : <BsRegex />}
+          {loading ? "..." :<> <span>AI Regex Generator</span> &nbsp; <FaRobot /> </>}
         </button>
       </div>
       {error && <p className="text-red-500 mt-2">{error}</p>}
