@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useContext, useReducer } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiPlus, FiSearch, FiX, FiClock, FiFolder, FiCode, FiHeart, FiChevronDown, FiEdit2, FiCheck } from "react-icons/fi";
-import { getCollections, getCollectionWithRequests, createCollection } from "../services/collectionService";
-import { getEnvironments, updateEnvironment } from "../services/envService";
+import { getCollections, getCollectionWithRequests, createCollection, deleteCollection } from "../services/collectionService";
+import { getEnvironments, updateEnvironment, deleteEnvironment } from "../services/envService";
 import { AuthContext } from "../context/AuthContext";
 import axios from "axios";
 import { initialState, requestReducer } from "./requestPanelComponents/requestReducer";
+import { useEnvironment } from '../context/EnvironmentContext';
+import { toast } from "react-hot-toast";
+import { getHistory } from '../services/historyService';
 
 // PayPalDonation Component
 const PayPalDonation = ({ isVisible, onClose }) => {
@@ -139,6 +142,7 @@ const ListItem = ({ item, selectedOption, getMethodColor, onClick, onDelete }) =
 
 const Sidebar = ({ onNewRequest, isSidebarVisible, requests = [], onRequestClick, }) => {
   const { user } = useContext(AuthContext);
+  const { environments, selectedEnvironment, setSelectedEnvironment, refreshEnvironments } = useEnvironment();
   const [selectedOption, setSelectedOption] = useState("");
   const [isMobile, setIsMobile] = useState(false);
   const [showDonation, setShowDonation] = useState(false);
@@ -147,8 +151,11 @@ const Sidebar = ({ onNewRequest, isSidebarVisible, requests = [], onRequestClick
   const [collectionRequests, setCollectionRequests] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [newCollectionName, setNewCollectionName] = useState("");
-  const [environments, setEnvironments] = useState([]);
+  const [newEnvironmentName, setNewEnvironmentName] = useState("");
+  const [environmentVariables, setEnvironmentVariables] = useState([{ key: "", value: "" }]);
   const [state, dispatch] = useReducer(requestReducer, initialState);
+  const [history, setHistory] = useState([]);
+  const [isHistoryLoading, setIsHistoryLoading] = useState(false);
 
   useEffect(() => {
     const checkScreenSize = () => setIsMobile(window.innerWidth < 768);
@@ -197,21 +204,23 @@ const Sidebar = ({ onNewRequest, isSidebarVisible, requests = [], onRequestClick
   }, [selectedCollection, user]);
 
   useEffect(() => {
-    const fetchEnvironments = async () => {
-      if (!user) return;
-      
-      try {
-        const response = await getEnvironments();
-        console.log("env : ",response.data)
-        if (response.success) {
-          setEnvironments(response.data);
+    const fetchHistory = async () => {
+      if (selectedOption === "History" && user) {
+        setIsHistoryLoading(true);
+        try {
+          const response = await getHistory();
+          if (response.success) {
+            setHistory(response.data);
+          }
+        } catch (error) {
+          console.error('Error fetching history:', error);
+        } finally {
+          setIsHistoryLoading(false);
         }
-      } catch (error) {
-        console.error("Error fetching environments:", error);
       }
     };
-    fetchEnvironments();
-  }, [user]);
+    fetchHistory();
+  }, [selectedOption, user]);
 
   const handleOptionSelect = (option) => {
     setSelectedOption(selectedOption === option ? "" : option);
@@ -278,6 +287,18 @@ const Sidebar = ({ onNewRequest, isSidebarVisible, requests = [], onRequestClick
     }
   };
 
+  const handleDeleteVariable = async (envId) => {
+    if (window.confirm('Are you sure you want to delete this environment and all its variables?')) {
+      try {
+        await deleteEnvironment(envId);
+        refreshEnvironments(); // This will update the environments list
+        toast.success('Environment deleted successfully');
+      } catch (error) {
+        toast.error(error.response?.data?.message || 'Failed to delete environment');
+      }
+    }
+  };
+
   const sidebarVariants = {
     open: { width: isMobile ? "280px" : "300px", transition: { type: "spring", damping: 25 } },
     closed: { width: "0px", transition: { type: "spring", damping: 25 } }
@@ -291,14 +312,22 @@ const Sidebar = ({ onNewRequest, isSidebarVisible, requests = [], onRequestClick
         },
       });
 
-      // ✅ Update the request list after successful delete
-    setCollectionRequests(prevRequests => 
-      prevRequests.filter(request => request._id !== id)
-    );
-  
+      // Refresh the lists based on current view
+      if (selectedOption === "History") {
+        const response = await getHistory();
+        if (response.success) {
+          setHistory(response.data);
+        }
+      } else if (selectedOption === "Collection" && selectedCollection) {
+        const response = await getCollectionWithRequests(selectedCollection);
+        if (response.success) {
+          setCollectionRequests(response.data.requests);
+        }
+      }
+
       dispatch({ type: 'SET_SUCCESS', payload: 'Request deleted successfully' });
       setTimeout(() => dispatch({ type: 'CLEAR_SUCCESS' }), 3000);
-  
+
     } catch (error) {
       dispatch({
         type: 'SET_ERROR',
@@ -308,7 +337,65 @@ const Sidebar = ({ onNewRequest, isSidebarVisible, requests = [], onRequestClick
     }
   };
   
-  
+  const handleCreateEnvironment = async () => {
+    if (!newEnvironmentName.trim()) {
+      toast.error("Environment name is required");
+      return;
+    }
+
+    try {
+      const response = await createEnvironment({
+        name: newEnvironmentName,
+        variables: environmentVariables.filter(v => v.key && v.value)
+      });
+
+      if (response.success) {
+        toast.success("Environment created successfully");
+        setNewEnvironmentName("");
+        setEnvironmentVariables([{ key: "", value: "" }]);
+        refreshEnvironments(); // Use the context's refresh function
+      }
+    } catch (error) {
+      toast.error(error.message || "Failed to create environment");
+    }
+  };
+
+  const handleDeleteCollection = async (collectionId) => {
+    if (window.confirm('Are you sure you want to delete this collection and all its requests?')) {
+      try {
+        await deleteCollection(collectionId);
+        // Refresh collections list
+        const response = await getCollections();
+        if (response.success) {
+          setCollections(response.data);
+          // If the deleted collection was selected, clear the selection
+          if (selectedCollection === collectionId) {
+            setSelectedCollection("");
+            setCollectionRequests([]);
+          }
+        }
+        toast.success('Collection deleted successfully');
+      } catch (error) {
+        toast.error(error.response?.data?.message || 'Failed to delete collection');
+      }
+    }
+  };
+
+  const renderEnvironmentVariables = () => {
+    const selectedEnv = environments.find(env => env._id === selectedEnvironment);
+    if (!selectedEnv) return null;
+
+    return (
+      <div className="space-y-2">
+        {selectedEnv.variables.map((variable, index) => (
+          <div key={index} className="flex items-center gap-2">
+            <span className="text-xs font-medium text-gray-700">{variable.key}</span>
+            <span className="text-xs text-gray-500">{variable.value}</span>
+          </div>
+        ))}
+      </div>
+    );
+  };
 
   return (
     <>
@@ -395,6 +482,15 @@ const Sidebar = ({ onNewRequest, isSidebarVisible, requests = [], onRequestClick
                             <FiPlus size={14} />
                           </button>
                         </div>
+                        {selectedCollection && (
+                          <button
+                            onClick={() => handleDeleteCollection(selectedCollection)}
+                            className="w-full px-3 py-2 text-xs text-red-500 border border-red-200 rounded-lg hover:bg-red-50 transition-colors flex items-center justify-center gap-2"
+                          >
+                            <FiX size={14} />
+                            Delete Collection
+                          </button>
+                        )}
                       </>
                     ) : (
                       <div className="w-full px-3 py-2 text-xs border border-gray-200 rounded-lg bg-gray-50 text-gray-500">
@@ -406,31 +502,55 @@ const Sidebar = ({ onNewRequest, isSidebarVisible, requests = [], onRequestClick
                 )}
 
                 {/* Variable Section */}
-{selectedOption === "Variable" && (
-  <div className="space-y-3 mb-4">
-    {user ? (
-      environments.map(env => (
-        <div key={env._id} className="space-y-2">
-          <h4 className="text-xs font-medium text-gray-700">{env.name}</h4>
-          {env.variables.map((variable, index) => (
-            <div key={index} className="flex items-center gap-2 bg-gray-50 p-2 rounded-lg">
-              <div className="flex-1 min-w-0">
-                <div className="text-xs font-medium text-gray-700 truncate">{variable.key}</div>
-                <div className="text-xs text-gray-500 truncate">{variable.value}</div>
-              </div>
-              {/* Edit button removed */}
-            </div>
-          ))}
-        </div>
-      ))
-    ) : (
-      <div className="w-full px-3 py-2 text-xs border border-gray-200 rounded-lg bg-gray-50 text-gray-500">
-        Please login to access variables
-      </div>
-    )}
-  </div>
-)}
-
+                {selectedOption === "Variable" && (
+                  <div className="space-y-3 mb-4">
+                    {user ? (
+                      environments.length > 0 ? (
+                        <>
+                          <div className="text-xs text-gray-400 mb-2 flex justify-between px-1">
+                            <span>{environments.reduce((total, env) => total + env.variables.length, 0)} variables</span>
+                          </div>
+                          {environments.map(env => (
+                            <div key={env._id} className="space-y-2">
+                              <div className="flex justify-between items-center">
+                                <h4 className="text-xs font-medium text-gray-700">{env.name}</h4>
+                                <button
+                                  onClick={() => handleDeleteVariable(env._id)}
+                                  className="text-gray-400 hover:text-red-500 transition-colors"
+                                >
+                                  <FiX size={14} />
+                                </button>
+                              </div>
+                              {env.variables.map((variable, index) => (
+                                <div key={index} className="flex items-center gap-2 bg-gray-50 p-2 rounded-lg">
+                                  <div className="flex-1 min-w-0">
+                                    <div className="text-xs font-medium text-gray-700 truncate">{variable.key}</div>
+                                    <div className="text-xs text-gray-500 truncate">{variable.value}</div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ))}
+                        </>
+                      ) : (
+                        <motion.div 
+                          className="flex flex-col items-center justify-center py-8 text-center"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                        >
+                          <div className="bg-gray-100 p-3 rounded-full mb-3">
+                            <FiCode className="text-gray-400" size={18} />
+                          </div>
+                          <p className="text-gray-500 text-sm">No variables created yet</p>
+                        </motion.div>
+                      )
+                    ) : (
+                      <div className="w-full px-3 py-2 text-xs border border-gray-200 rounded-lg bg-gray-50 text-gray-500">
+                        Please login to access variables
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Results */}
                 <div className="text-xs text-gray-400 mb-2 flex justify-between px-1">
@@ -438,11 +558,15 @@ const Sidebar = ({ onNewRequest, isSidebarVisible, requests = [], onRequestClick
                     {selectedOption 
                       ? selectedOption === "Collection" && selectedCollection
                         ? `${collectionRequests.length} requests`
-                        : `${selectedOption.toLowerCase()}`
+                        : selectedOption === "Variable" 
+                          ? ""
+                          : selectedOption === "History"
+                            ? `${history.length} requests`
+                            : `${selectedOption.toLowerCase()}`
                       : ""
                     }
                   </span>
-                  {selectedOption && (
+                  {selectedOption && selectedOption !== "Variable" && (
                     <span className="text-gray-400">{selectedOption}</span>
                   )}
                 </div>
@@ -475,7 +599,6 @@ const Sidebar = ({ onNewRequest, isSidebarVisible, requests = [], onRequestClick
                         ) : selectedCollection ? (
                           collectionRequests.length > 0 ? (
                             collectionRequests.map((request) => (
-                              
                               <ListItem
                                 key={request._id}
                                 item={request}
@@ -484,8 +607,6 @@ const Sidebar = ({ onNewRequest, isSidebarVisible, requests = [], onRequestClick
                                 onClick={handleRequestClick}
                                 onDelete={()=>handleDelete(request._id)}
                               />
-                              
-                          
                             ))
                           ) : (
                             <motion.div 
@@ -511,30 +632,52 @@ const Sidebar = ({ onNewRequest, isSidebarVisible, requests = [], onRequestClick
                             <p className="text-gray-500 text-sm">Select a collection</p>
                           </motion.div>
                         )
-                      ) : (
-                        <motion.div 
-                          className="flex flex-col items-center justify-center py-8 text-center"
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                        >
-                          <div className="bg-gray-100 p-3 rounded-full mb-3">
-                            <FiFolder className="text-gray-400" size={18} />
-                          </div>
-                          <p className="text-gray-500 text-sm">Select a category</p>
-                        </motion.div>
-                      )
-                    ) : (
-                      <motion.div 
-                        className="flex flex-col items-center justify-center py-8 text-center"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                      >
-                        <div className="bg-gray-100 p-3 rounded-full mb-3">
-                          <FiFolder className="text-gray-400" size={18} />
-                        </div>
-                        <p className="text-gray-500 text-sm">Select a category</p>
-                      </motion.div>
-                    )}
+                      ) : selectedOption === "History" ? (
+                        !user ? (
+                          <motion.div 
+                            className="flex flex-col items-center justify-center py-8 text-center"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                          >
+                            <div className="bg-gray-100 p-3 rounded-full mb-3">
+                              <FiClock className="text-gray-400" size={18} />
+                            </div>
+                            <p className="text-gray-500 text-sm">Please login to view history</p>
+                          </motion.div>
+                        ) : isHistoryLoading ? (
+                          <motion.div 
+                            className="flex flex-col items-center justify-center py-8 text-center"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                          >
+                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900 mb-2"></div>
+                            <p className="text-gray-500 text-sm">Loading history...</p>
+                          </motion.div>
+                        ) : history.length > 0 ? (
+                          history.map((request) => (
+                            <ListItem
+                              key={request._id}
+                              item={request}
+                              selectedOption={selectedOption}
+                              getMethodColor={getMethodColor}
+                              onClick={handleRequestClick}
+                              onDelete={()=>handleDelete(request._id)}
+                            />
+                          ))
+                        ) : (
+                          <motion.div 
+                            className="flex flex-col items-center justify-center py-8 text-center"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                          >
+                            <div className="bg-gray-100 p-3 rounded-full mb-3">
+                              <FiClock className="text-gray-400" size={18} />
+                            </div>
+                            <p className="text-gray-500 text-sm">No history available</p>
+                          </motion.div>
+                        )
+                      ) : null
+                    ) : null}
                   </AnimatePresence>
                 </div>
               </div>
