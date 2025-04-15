@@ -478,8 +478,8 @@ const RequestPanel = ({ id, request, isExpanded, onToggle, topHeight, onResponse
               value={state.url}
               onChange={(e) => dispatch({ type: "SET_URL", payload: e.target.value })}
               className="w-full px-4 py-2 text-xs border border-gray-200 rounded-lg focus:ring-1 focus:ring-gray-300 focus:border-gray-300"
-              whileHover={{ y: -1 }}
-              whileTap={{ scale: 0.98 }}
+              // whileHover={{ y: -1 }}
+              // whileTap={{ scale: 0.98 }}
             />
             {state.url && (
               <button
