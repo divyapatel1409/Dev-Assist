@@ -142,6 +142,7 @@ const ResponsePanel = ({ response }) => {
               className="text-gray-400 hover:text-gray-600 transition-colors p-1"
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
+							 aria-label="Toggle menu"
             >
               <FiMenu size={16} />
             </motion.button>

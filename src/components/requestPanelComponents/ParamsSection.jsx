@@ -34,6 +34,7 @@ const ParamsSection = ({ params, setParams }) => {
                 onChange={(e) => handleParamChange(index, "key", e.target.value)}
                 className="w-36 px-3 py-1.5 text-xs border border-gray-200 rounded-lg bg-white focus:ring-1 focus:ring-gray-300 focus:border-gray-300 transition-all"
                 whileHover={{ y: -1 }}
+								aria-label="Input Key"
                 whileTap={{ scale: 0.98 }}
               />
               <motion.input
@@ -43,6 +44,7 @@ const ParamsSection = ({ params, setParams }) => {
                 onChange={(e) => handleParamChange(index, "value", e.target.value)}
                 className="w-36 px-3 py-1.5 text-xs border border-gray-200 rounded-lg bg-white focus:ring-1 focus:ring-gray-300 focus:border-gray-300 transition-all"
                 whileHover={{ y: -1 }}
+								aria-label="Input Value"
                 whileTap={{ scale: 0.98 }}
               />
               <motion.button
@@ -50,6 +52,8 @@ const ParamsSection = ({ params, setParams }) => {
                 className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors flex-shrink-0"
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+								aria-label="Remove Button"
+
               >
                 <FiX size={14} />
               </motion.button>

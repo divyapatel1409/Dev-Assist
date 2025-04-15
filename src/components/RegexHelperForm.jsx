@@ -136,6 +136,7 @@ export default function RegexHelperForm() {
                 onChange={(e) => setRegex(e.target.value)}
                 className="w-4/5 p-2 border-r rounded-l focus:outline-none"
                 placeholder="Enter regex pattern here..."
+								aria-label="Input"
               />
               <button
                 onClick={copyRegex}
@@ -192,6 +193,8 @@ export default function RegexHelperForm() {
               onChange={(e) => setTestString(e.target.value)}
               className="w-full p-2 border rounded h-24"
               placeholder="Enter text to test your regex..."
+							aria-label="Test Regex"
+
             />
           </div>
 

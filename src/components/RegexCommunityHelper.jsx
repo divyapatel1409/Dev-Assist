@@ -45,6 +45,7 @@ export default function RegexCommunityHelper({ clear, setRegex, refresh }) {
         type="text"
         placeholder="Search regex by name or pattern..."
         value={search}
+				aria-label="Input Key"
         onChange={(e) => setSearch(e.target.value)}
         className="w-full p-2 mb-4 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
       />

@@ -410,6 +410,7 @@ const RequestPanel = ({ id, request, isExpanded, onToggle, topHeight, onResponse
             className="text-gray-400 hover:text-gray-600 transition-colors p-1"
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
+						 aria-label="Minimize Tab"
           >
             {isExpanded ? <FiChevronUp size={18} /> : <FiChevronDown size={18} />}
           </motion.button>
@@ -475,6 +476,7 @@ const RequestPanel = ({ id, request, isExpanded, onToggle, topHeight, onResponse
             <motion.input
               type="text"
               placeholder="Enter request URL"
+							 aria-label="URL Input"
               value={state.url}
               onChange={(e) => dispatch({ type: "SET_URL", payload: e.target.value })}
               className="w-full px-4 py-2 text-xs border border-gray-200 rounded-lg focus:ring-1 focus:ring-gray-300 focus:border-gray-300"

@@ -56,6 +56,8 @@ const RegexGenerator = ({ prompt, setPrompt, setRegex, setTestString }) => {
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
           placeholder="Generate regex using prompt..."
+					aria-label="Input Key"
+
           className="flex-grow border border-gray-300 rounded-l-md px-4 py-2 focus:outline-none"
         />
         <button
