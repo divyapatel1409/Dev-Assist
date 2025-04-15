@@ -54,7 +54,9 @@ export const createCollection = async (collectionData) => {
 export const deleteCollection = async (id) => {
   try {
     const response = await axios.delete(`${API_URL}/collection/${id}`, {
-      headers: authHeader()
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
     });
     return response.data;
   } catch (error) {

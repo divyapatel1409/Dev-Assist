@@ -1,7 +1,10 @@
 import express from 'express';
-import { createApiRequest, getApiRequest, updateApiRequest, deleteApiRequest } from '../controllers/apiRequestController.js';
+import { createApiRequest, getApiRequest, updateApiRequest, deleteApiRequest, getAllApiRequests } from '../controllers/apiRequestController.js';
 
 const router = express.Router();
+
+// Route to get all API requests for a user
+router.get('/requests', getAllApiRequests);
 
 // Route to create a new API request
 router.post('/request', createApiRequest);

@@ -65,7 +65,9 @@ export const updateEnvironment = async (id, envData) => {
 export const deleteEnvironment = async (id) => {
   try {
     const response = await axios.delete(`${API_URL}/env/${id}`, {
-      headers: authHeader()
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
     });
     return response.data;
   } catch (error) {

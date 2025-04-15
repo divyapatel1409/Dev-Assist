@@ -89,3 +89,15 @@ export const deleteApiRequest = async (req, res) => {
     return res.status(500).json({ success: false, message: error.message });
   }
 };
+
+// Get all API requests for a user
+export const getAllApiRequests = async (req, res) => {
+  try {
+    const apiRequests = await ApiRequest.find({ userId: req.user._id })
+      .sort({ createdAt: -1 }); // Sort by most recent first
+
+    return res.status(200).json({ success: true, data: apiRequests });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
